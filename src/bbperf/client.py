@@ -8,17 +8,17 @@ import time
 import queue
 import socket
 
-import data_sender_thread
-import data_udp_ping_sender_thread
-import data_receiver_thread
-import control_receiver_thread
-import util
-import calibration
-import const
-import output
-import graph
+from . import data_sender_thread
+from . import data_udp_ping_sender_thread
+from . import data_receiver_thread
+from . import control_receiver_thread
+from . import util
+from . import calibration
+from . import const
+from . import output
+from . import graph
 
-from tcp_control_connection_class import TcpControlConnectionClass
+from .tcp_control_connection_class import TcpControlConnectionClass
 
 
 def client_mainline(args):

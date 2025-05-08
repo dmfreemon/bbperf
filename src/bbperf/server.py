@@ -8,14 +8,14 @@ import socket
 import multiprocessing
 import queue
 
-import data_sender_thread
-import data_receiver_thread
-import control_receiver_thread
-import util
-import const
-import calibration
+from . import data_sender_thread
+from . import data_receiver_thread
+from . import control_receiver_thread
+from . import util
+from . import const
+from . import calibration
 
-from tcp_control_connection_class import TcpControlConnectionClass
+from .tcp_control_connection_class import TcpControlConnectionClass
 
 
 def server_mainline(args):

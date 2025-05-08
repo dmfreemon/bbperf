@@ -5,9 +5,9 @@ import time
 import socket
 import select
 
-import util
-import const
-import calibration
+from . import util
+from . import const
+from . import calibration
 
 
 # falling off the end of this method terminates the process

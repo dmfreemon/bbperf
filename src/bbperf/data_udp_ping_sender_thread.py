@@ -3,7 +3,7 @@
 
 import time
 
-import const
+from . import const
 
 
 # We need to tell the server what our (the client's) address and port are for

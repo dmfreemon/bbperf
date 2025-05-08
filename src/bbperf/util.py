@@ -4,7 +4,7 @@
 import socket
 import ipaddress
 
-from exceptions import PeerDisconnectedException
+from .exceptions import PeerDisconnectedException
 
 
 def validate_args(args):

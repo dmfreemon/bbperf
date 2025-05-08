@@ -5,8 +5,8 @@ import os
 import time
 import tempfile
 
-import calibration
-import const
+from . import calibration
+from . import const
 
 
 args = None

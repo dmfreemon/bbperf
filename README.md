@@ -1,7 +1,6 @@
-# Copyright (c) 2024 Cloudflare, Inc.
-# Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
+<p align="center"><strong>bbperf</strong> <em>- An end-to-end performance and bufferbloat measurement tool</em></p>
 
-bbperf measures the following for both TCP and UDP:
+`bbperf` measures the following for both TCP and UDP:
 
 * End-to-end latency, both unloaded and loaded
 * Throughput
@@ -18,19 +17,35 @@ Features that distinguish this tool from existing tools include:
 
 * Latency, both unloaded and loaded, is measured by the same flow that is under test.
 
-    Other tools will commonly measure latency using a different flow or different protocol.  One of the
-    reasons why using different protocols and/or different flows is not desirable is because fair queuing
-    will cause the latency of those other flows to be much lower (better) than the flow that matters.
+    Other tools will commonly measure latency using a different flow or different protocol.  One of the reasons why using different protocols and/or different flows is not desirable is because fair queuing will cause the latency of those other flows to be much lower (better) than the flow that matters.
 
 * Bufferbloat is calculated
 
-    It is often assumed that TCP receive buffers are the only source of bufferbloat.  While that is common, it
-    misses many other locations where bufferbloat may occur.  This tool reports the effects of all sources of
-    bufferbloat, not just TCP receive buffers.
+    It is often assumed that TCP receive buffers are the only source of bufferbloat.  While that is common, it misses many other locations where bufferbloat may occur.  This tool reports the effects of all sources of bufferbloat, not just TCP receive buffers.
 
 * Automatic generation of graphs
 
+### Usage
 
+To run a test:
+
+1. Start the server on one host
+```
+    $ bbperf.py -s
+```
+
+2. Run the client on another host
+```
+    $ bbperf.py -c <ip address of server> [additional options as desired]
+```
+
+`bbperf` will use port 5301 between the client and server (by default).
+
+The first 5 seconds performs a calibration, during which it captures the unloaded latency between endpoints.
+
+The direction of data flow is from the client to the server.  That is reversed when the "-R" option is specified.
+
+```
 $ bbperf.py --help
 usage: bbperf.py [-h] [-v] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k]
 
@@ -52,24 +67,10 @@ options:
                         n[kmgKMG] | n[kmgKMG]pps
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
+```
 
-
-To run a test:
-
-Start the server on one host
-
-    $ bbperf.py -s
-
-Run the client on another host
-
-    $ bbperf.py -c <ip address of server> [additional options as desired]
-
-By default, bbperf will use port 5301 between the client and server.
-
-The first 5 seconds performs a calibration, during which it captures the unloaded latency between endpoints.
-
-Output from bbperf includes the following information:
-
+Output from `bbperf` includes the following information:
+```
     sent_time       time when a packet was sent
     recv_time       time when a packet was received
     sender_pps      packets per second sent
@@ -83,7 +84,28 @@ Output from bbperf includes the following information:
     bloat           Ratio of buffered bytes to BDP
     pkts_dropped    number of packets dropped (UDP only)
     drop%           percentage of packets dropped (UDP only)
+```
 
-By default, the client is the sender and the server is the receiver.  That is reversed when
-the "-R" option is specified.
+### Installation
+
+`bbperf` is available via PyPI repository (pypi.org) and can be installed using pip.
+
+```
+python3 -m venv bbperf-venv
+. bbperf-venv/bin/active
+pip install bbperf
+
+bbperf.py [options]
+```
+
+In the event python3 is not already installed on the host:
+
+```
+apt-get install python3 python3-pip  (Debian/Ubuntu)
+dnf install python3 python3-pip      (Fedora/RHEL)
+```
+
+---
+Copyright (c) 2024 Cloudflare, Inc.<br/>
+Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 

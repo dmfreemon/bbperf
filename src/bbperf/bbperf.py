@@ -5,11 +5,10 @@
 
 import argparse
 
-import client
-import server
-import util
-import const
-
+from . import client
+from . import server
+from . import util
+from . import const
 
 def mainline():
 

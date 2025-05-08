@@ -3,7 +3,7 @@
 
 import time
 
-from exceptions import PeerDisconnectedException
+from .exceptions import PeerDisconnectedException
 
 
 # falling off the end of this method terminates the process

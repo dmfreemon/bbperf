@@ -4,9 +4,9 @@
 import json
 import argparse
 
-import const
-import util
-from exceptions import PeerDisconnectedException
+from . import const
+from . import util
+from .exceptions import PeerDisconnectedException
 
 
 class TcpControlConnectionClass:

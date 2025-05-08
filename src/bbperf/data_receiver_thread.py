@@ -4,8 +4,8 @@
 import time
 import socket
 
-import const
-import util
+from . import const
+from . import util
 
 
 def run(args, stdout_queue, control_conn, data_sock, peer_addr):

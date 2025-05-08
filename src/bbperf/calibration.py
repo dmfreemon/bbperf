@@ -3,7 +3,7 @@
 
 import time
 
-import const
+from . import const
 
 
 calibration_start_time = None
