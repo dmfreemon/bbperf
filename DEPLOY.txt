@@ -11,6 +11,8 @@ Create tar.gz and whl files in dist directory:
 
     cd /path/to/bbperf/git/repo/dir    <-- the directory with the pyproject.toml file
 
+    vim pyproject.toml                 <-- increment the version number
+
     python3 -m build
 
 UPLOAD
@@ -39,3 +41,4 @@ Using the test PyPI site:
 Installing from the local git repository:
 
     python3 -m pip install /path/to/bbperf/git/repo/dir    <-- the directory with the pyproject.toml file
+
