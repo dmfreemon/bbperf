@@ -3,6 +3,7 @@
 
 import json
 import argparse
+import socket
 
 from . import const
 from . import util
@@ -24,6 +25,9 @@ class TcpControlConnectionClass:
 
         control_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
 
+        # set TCP_NODELAY because the control messages back to the
+        # sender from the data receiver are part of the RTT measurement
+        control_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     def set_args(self, args):
         self.args = args
