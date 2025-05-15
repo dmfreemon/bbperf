@@ -13,6 +13,10 @@ Create tar.gz and whl files in dist directory:
 
     vim pyproject.toml                 <-- increment the version number
 
+    git tag -a v0.0.2 -m 'version 0.0.2'
+
+    git push origin --tags
+
     python3 -m build
 
 UPLOAD
