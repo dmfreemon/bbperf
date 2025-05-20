@@ -7,6 +7,7 @@ import tempfile
 
 from . import calibration
 from . import const
+from .json_output_class import JsonOutputClass
 
 
 args = None
@@ -18,12 +19,14 @@ print_header2 = True
 print_header3 = True
 relative_start_time_sec = None
 total_dropped_as_of_last_interval = 0
+json_output = None
 
 
 def init(args0):
     global args
     global tmpfile1
     global tmpfile2
+    global json_output
 
     args = args0
 
@@ -39,6 +42,14 @@ def init(args0):
     tmpfile1 = tempfile.NamedTemporaryFile(prefix=tmp_graph_filename_prefix, delete=False)
     tmpfile2 = tempfile.NamedTemporaryFile(prefix=tmp_raw_filename_prefix, delete=False)
 
+    # requested JSON output file
+    if args.json_file:
+        try:
+            json_output = JsonOutputClass(args)
+        except Exception as e:
+            print("ERROR creating json output: {} {}".format(type(e), str(e)))
+            json_output = None
+
 
 def get_graph_data_file_name():
     return tmpfile1.name
@@ -49,6 +60,9 @@ def get_raw_data_file_name():
 def term():
     tmpfile1.close()
     tmpfile2.close()
+
+    if json_output:
+        json_output.write_output_file()
 
 
 def delete_data_files():
@@ -125,6 +139,9 @@ def print_output(s1):
         unloaded_rtt_sec = calibration.get_unloaded_latency_rtt_sec()
         unloaded_rtt_ms = unloaded_rtt_sec * 1000
 
+        if json_output:
+            json_output.set_unloaded_rtt_ms(unloaded_rtt_ms)
+
         bdp_bytes = int( receiver_interval_rate_bytes_per_sec * unloaded_rtt_sec )
         buffered_bytes = int( receiver_interval_rate_bytes_per_sec * rtt_sec )
 
@@ -172,7 +189,20 @@ def print_output(s1):
             dropped_this_interval,
             dropped_this_interval_percent
             )
+
         write_graph_data_to_file(lineout)
+
+        # add to JSON output
+        if json_output:
+            new_entry = {
+                "sent_time_sec": r_pkt_sent_time_sec,
+                "loaded_rtt_ms": rtt_ms,
+                "receiver_throughput_rate_mbps": receiver_interval_rate_mbps,
+                "excess_buffered_bytes": (buffered_bytes - bdp_bytes),
+                "receiver_pps": receiver_pps,
+                "pkt_loss_percent": dropped_this_interval_percent
+            }
+            json_output.add_entry(new_entry)
 
         # write to stdout at the rate of one line per second
         # each stdout line will be a 0.1s snapshot

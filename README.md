@@ -47,7 +47,7 @@ The direction of data flow is from the client to the server.  That is reversed w
 
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-v] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k]
+usage: bbperf.py [-h] [-v] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k] [-J JSON_FILE]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
@@ -55,18 +55,19 @@ options:
   -h, --help            show this help message and exit
   -v, --verbosity       increase output verbosity
   -s, --server          run in server mode
-  -c SERVER_IP, --client SERVER_IP
+  -c, --client SERVER_IP
                         run in client mode
-  -p SERVER_PORT, --port SERVER_PORT
+  -p, --port SERVER_PORT
                         server port (default: 5301)
   -R, --reverse         data flow in download direction (server to client)
-  -t SECONDS, --time SECONDS
-                        duration of run in seconds
+  -t, --time SECONDS    duration of run in seconds
   -u, --udp             run in UDP mode (default: TCP mode)
-  -b BANDWIDTH, --bandwidth BANDWIDTH
+  -b, --bandwidth BANDWIDTH
                         n[kmgKMG] | n[kmgKMG]pps
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
+  -J, --json-file JSON_FILE
+                        JSON output file
 ```
 
 Output from `bbperf` includes the following information:

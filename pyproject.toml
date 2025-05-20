@@ -18,6 +18,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Topic :: System :: Networking",
 ]
+dependencies = [
+    "numpy",
+]
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 

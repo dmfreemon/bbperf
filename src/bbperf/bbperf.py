@@ -65,6 +65,10 @@ def mainline():
         default=False,
         help="keep data file")
 
+    parser.add_argument("-J", "--json-file",
+        default=None,
+        help="JSON output file")
+
     args = parser.parse_args()
 
     util.validate_args(args)
