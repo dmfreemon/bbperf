@@ -68,8 +68,6 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
         except socket.timeout:
             pass
 
-        total_recv_calls += 1
-
         curr_time_sec = time.time()
 
         if end_time and (curr_time_sec > end_time):
@@ -81,6 +79,8 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
         if num_bytes_read == 0:
             # recv must have timed out, skip the rest of this loop
             continue
+
+        total_recv_calls += 1
 
         if not end_time:
             # first data packet arrived, so test just started running

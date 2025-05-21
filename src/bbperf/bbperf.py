@@ -53,7 +53,7 @@ def mainline():
 
     parser.add_argument("-b", "--bandwidth",
         default=None,
-        help="n[kmgKMG] | n[kmgKMG]pps")
+        help="n[kmgKMG] | n[kmgKMG]pps, optional for both TCP and UDP")
 
     parser.add_argument("-g", "--graph",
         action="store_true",

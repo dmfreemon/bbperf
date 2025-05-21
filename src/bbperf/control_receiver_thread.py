@@ -4,12 +4,17 @@
 import time
 
 from .exceptions import PeerDisconnectedException
+from .udp_rate_manager_class import UdpRateManagerClass
 
 
+# direction up, runs on client
+# args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_queue(args, stdout_queue, control_conn, results_queue):
+def run_recv_term_queue(args, stdout_queue, control_conn, results_queue, shared_udp_sending_rate_pps):
     if args.verbosity:
         stdout_queue.put("starting control receiver process: run_recv_term_queue")
+
+    udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
 
     while True:
 
@@ -35,16 +40,24 @@ def run_recv_term_queue(args, stdout_queue, control_conn, results_queue):
 
         results_queue.put(new_str)
 
+        # udp autorate
+        if args.udp and not args.bandwidth:
+            udp_rate_manager.update(new_str)
+
     control_conn.close()
 
     if args.verbosity:
         stdout_queue.put("exiting control receiver process: run_recv_term_queue")
 
 
+# direction down, runs on server
+# args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_send(args, stdout_queue, control_conn):
+def run_recv_term_send(args, stdout_queue, control_conn, shared_udp_sending_rate_pps):
     if args.verbosity:
         stdout_queue.put("starting control receiver process: run_recv_term_send")
+
+    udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
 
     while True:
 
@@ -70,12 +83,18 @@ def run_recv_term_send(args, stdout_queue, control_conn):
 
         control_conn.send(new_str.encode())
 
+        # udp autorate
+        if args.udp and not args.bandwidth:
+            udp_rate_manager.update(new_str)
+
     control_conn.close()
 
     if args.verbosity:
         stdout_queue.put("exiting control receiver process: run_recv_term_send")
 
 
+# direction down, runs on client (passthru)
+# args are client args (not server args) -- this always runs on client
 # falling off the end of this method terminates the process
 def run_recv_queue(args, stdout_queue, control_conn, results_queue):
     if args.verbosity:

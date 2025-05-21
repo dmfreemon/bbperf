@@ -7,6 +7,7 @@ import tempfile
 
 from . import calibration
 from . import const
+from . import util
 from .json_output_class import JsonOutputClass
 
 
@@ -99,72 +100,42 @@ def print_output(s1):
 
     write_raw_data_to_file(s1)
 
-    swords = s1.split()
-
-    r_record_type = swords[1]
-    r_pkt_sent_time_sec = float(swords[2])
-    r_sender_interval_duration_sec = float(swords[3])
-    r_sender_interval_pkts_sent = int(swords[4])                # valid for udp only
-    r_sender_interval_bytes_sent = int(swords[5])
-    r_sender_total_pkts_sent = int(swords[6])                   # valid for udp only
-    r_receiver_interval_duration_sec = float(swords[8])
-    r_receiver_interval_pkts_received = int(swords[9])          # valid for udp only
-    r_receiver_interval_bytes_received = int(swords[10])
-    r_receiver_total_pkts_received = int(swords[11])            # valid for udp only
-    r_pkt_received_time_sec = float(swords[13])
-
     curr_time = time.time()
-    rtt_sec = r_pkt_received_time_sec - r_pkt_sent_time_sec
+
+    r_record = util.parse_r_record(args, s1)
 
     if relative_start_time_sec is None:
         # first incoming result has arrived
-        relative_start_time_sec = r_pkt_sent_time_sec
+        relative_start_time_sec = r_record["r_pkt_sent_time_sec"]
         relative_pkt_sent_time_sec = 0
         relative_pkt_received_time_sec = 0
     else:
-        relative_pkt_sent_time_sec = r_pkt_sent_time_sec - relative_start_time_sec
-        relative_pkt_received_time_sec = r_pkt_received_time_sec - relative_start_time_sec
+        relative_pkt_sent_time_sec = r_record["r_pkt_sent_time_sec"] - relative_start_time_sec
+        relative_pkt_received_time_sec = r_record["r_pkt_received_time_sec"] - relative_start_time_sec
 
-    if r_record_type == "run":
-
-        sender_interval_rate_bps = (r_sender_interval_bytes_sent * 8.0) / r_sender_interval_duration_sec
-        sender_interval_rate_mbps = sender_interval_rate_bps / (10 ** 6)
-
-        receiver_interval_rate_bytes_per_sec = r_receiver_interval_bytes_received / r_receiver_interval_duration_sec
-        receiver_interval_rate_bps = receiver_interval_rate_bytes_per_sec * 8
-        receiver_interval_rate_mbps = receiver_interval_rate_bps / (10 ** 6)
-
-        rtt_ms = rtt_sec * 1000
-
+    if r_record["r_record_type"] == "run":
         unloaded_rtt_sec = calibration.get_unloaded_latency_rtt_sec()
         unloaded_rtt_ms = unloaded_rtt_sec * 1000
 
         if json_output:
             json_output.set_unloaded_rtt_ms(unloaded_rtt_ms)
 
-        bdp_bytes = int( receiver_interval_rate_bytes_per_sec * unloaded_rtt_sec )
-        buffered_bytes = int( receiver_interval_rate_bytes_per_sec * rtt_sec )
+        bdp_bytes = int( r_record["receiver_interval_rate_bytes_per_sec"] * unloaded_rtt_sec )
 
         if bdp_bytes > 0:
-            bloat_factor = float(buffered_bytes) / bdp_bytes
+            bloat_factor = float(r_record["buffered_bytes"]) / bdp_bytes
         else:
             bloat_factor = 0
 
         if args.udp:
-            sender_pps = int(r_sender_interval_pkts_sent / r_sender_interval_duration_sec)
-            receiver_pps = int(r_receiver_interval_pkts_received / r_receiver_interval_duration_sec)
-
-            total_dropped = r_sender_total_pkts_sent - r_receiver_total_pkts_received
-            dropped_this_interval = total_dropped - total_dropped_as_of_last_interval
+            dropped_this_interval = r_record["total_dropped"] - total_dropped_as_of_last_interval
             if dropped_this_interval < 0:
                 dropped_this_interval = 0
-            dropped_this_interval_percent = (dropped_this_interval * 100.0) / r_sender_interval_pkts_sent
+            dropped_this_interval_percent = (dropped_this_interval * 100.0) / r_record["r_sender_interval_pkts_sent"]
             # remember this for next loop:
-            total_dropped_as_of_last_interval = total_dropped
+            total_dropped_as_of_last_interval = r_record["total_dropped"]
         else:
             # tcp
-            sender_pps = -1
-            receiver_pps = -1
             dropped_this_interval = -1
             dropped_this_interval_percent = -1
 
@@ -177,14 +148,14 @@ def print_output(s1):
         lineout = "{} {} {} {} {} {} {} {} {} {} {} {} {}".format(
             relative_pkt_sent_time_sec,
             relative_pkt_received_time_sec,
-            sender_pps,
-            sender_interval_rate_mbps,
-            receiver_pps,
-            receiver_interval_rate_mbps,
+            r_record["sender_pps"],
+            r_record["sender_interval_rate_mbps"],
+            r_record["receiver_pps"],
+            r_record["receiver_interval_rate_mbps"],
             unloaded_rtt_ms,
-            rtt_ms,
+            r_record["rtt_ms"],
             bdp_bytes,
-            buffered_bytes,
+            r_record["buffered_bytes"],
             bloat_factor,
             dropped_this_interval,
             dropped_this_interval_percent
@@ -195,11 +166,11 @@ def print_output(s1):
         # add to JSON output
         if json_output:
             new_entry = {
-                "sent_time_sec": r_pkt_sent_time_sec,
-                "loaded_rtt_ms": rtt_ms,
-                "receiver_throughput_rate_mbps": receiver_interval_rate_mbps,
-                "excess_buffered_bytes": (buffered_bytes - bdp_bytes),
-                "receiver_pps": receiver_pps,
+                "sent_time_sec": r_record["r_pkt_sent_time_sec"],
+                "loaded_rtt_ms": r_record["rtt_ms"],
+                "receiver_throughput_rate_mbps": r_record["receiver_interval_rate_mbps"],
+                "excess_buffered_bytes": (r_record["buffered_bytes"] - bdp_bytes),
+                "receiver_pps": r_record["receiver_pps"],
                 "pkt_loss_percent": dropped_this_interval_percent
             }
             json_output.add_entry(new_entry)
@@ -219,14 +190,14 @@ def print_output(s1):
             print("{:11.6f} {:11.6f} {:8d}   {:11.3f}   {:8d}    {:11.3f}    {:8.3f}    {:9.3f}  {:9d}    {:9d}    {:6.1f}x    {:6d}     {}".format(
                 relative_pkt_sent_time_sec,
                 relative_pkt_received_time_sec,
-                sender_pps,
-                sender_interval_rate_mbps,
-                receiver_pps,
-                receiver_interval_rate_mbps,
+                r_record["sender_pps"],
+                r_record["sender_interval_rate_mbps"],
+                r_record["receiver_pps"],
+                r_record["receiver_interval_rate_mbps"],
                 unloaded_rtt_ms,
-                rtt_ms,
+                r_record["rtt_ms"],
                 bdp_bytes,
-                buffered_bytes,
+                r_record["buffered_bytes"],
                 bloat_factor,
                 dropped_this_interval,
                 dropped_this_interval_percent_str
@@ -235,7 +206,7 @@ def print_output(s1):
             last_line_to_stdout_time = curr_time
 
     else:
-        calibration.update_rtt_sec(rtt_sec)
+        calibration.update_rtt_sec(r_record["rtt_sec"])
 
         if curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC):
             if print_header1:

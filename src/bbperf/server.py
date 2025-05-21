@@ -92,6 +92,8 @@ def server_mainline(args):
 
         print("created data connection ({})".format("udp" if client_args.udp else "tcp"))
 
+        shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
+
         # run test
 
         print("test running")
@@ -127,7 +129,7 @@ def server_mainline(args):
             control_receiver_process = multiprocessing.Process(
                 name = "controlreceiver",
                 target = control_receiver_thread.run_recv_term_send,
-                args = (client_args, control_receiver_stdout_queue, control_conn),
+                args = (client_args, control_receiver_stdout_queue, control_conn, shared_udp_sending_rate_pps),
                 daemon = True)
 
             data_sender_stdout_queue = multiprocessing.Queue()
@@ -135,7 +137,7 @@ def server_mainline(args):
             data_sender_process = multiprocessing.Process(
                 name = "datasender",
                 target = data_sender_thread.run,
-                args = (client_args, data_sender_stdout_queue, data_sock, None),
+                args = (client_args, data_sender_stdout_queue, data_sock, None, shared_udp_sending_rate_pps),
                 daemon = True)
 
             # wait for start message

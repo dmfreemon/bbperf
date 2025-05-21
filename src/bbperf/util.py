@@ -4,6 +4,7 @@
 import socket
 import ipaddress
 
+from . import const
 from .exceptions import PeerDisconnectedException
 
 
@@ -24,9 +25,6 @@ def validate_args(args):
 
     if args.time < 10:
         raise Exception("ERROR: time must be at least 10 seconds")
-
-    if args.udp and not args.bandwidth:
-        raise Exception("ERROR: bandwidth option must be specified for UDP mode")
 
 
 def convert_bandwidth_str_to_int(arg_str):
@@ -58,6 +56,41 @@ def convert_bandwidth_str_to_int(arg_str):
         ret_val = int(human_num_str)
 
     return is_pps, ret_val
+
+
+def convert_bandwidth_spec_to_batch_info(args, bandwidth_is_pps, bandwidth_val_int):
+
+    if args.udp:
+        if bandwidth_is_pps:
+            packets_per_sec = bandwidth_val_int
+            sends_per_sec = packets_per_sec
+        else:
+            # udp/bps
+            packets_per_sec = (bandwidth_val_int / 8.0) / len(const.PAYLOAD_1K)
+            sends_per_sec = packets_per_sec
+
+        batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_UDP_PKTS
+
+    else:
+        # tcp
+        if bandwidth_is_pps:
+            packets_per_sec = bandwidth_val_int
+            sends_per_sec =  bandwidth_val_int / ( len(const.PAYLOAD_4K) / 1400.0 )
+        else:
+            packets_per_sec = (bandwidth_val_int / 8.0) / 1400.0
+            sends_per_sec = packets_per_sec / ( len(const.PAYLOAD_4K) / 1400.0 )
+
+        batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_TCP_PKTS
+
+    batches_per_sec = sends_per_sec / batch_size
+
+    if batches_per_sec < 1:
+        batches_per_sec = 1
+        batch_size = 1
+
+    delay_between_batches = 1.0 / batches_per_sec
+
+    return batch_size, delay_between_batches
 
 
 def done_with_socket(mysock):
@@ -103,3 +136,61 @@ def recv_exact_num_bytes_tcp(client_sock, total_num_bytes_to_read):
         payload_bytes.extend(recv_bytes)
 
     return payload_bytes
+
+
+def parse_r_record(args, s1):
+    r_record = {}
+
+    swords = s1.split()
+
+    # literal "a"
+    r_record["r_record_type"] = swords[1]
+    r_record["r_pkt_sent_time_sec"] = float(swords[2])
+    r_record["r_sender_interval_duration_sec"] = float(swords[3])
+    r_record["r_sender_interval_pkts_sent"] = int(swords[4])                # valid for udp only
+    r_record["r_sender_interval_bytes_sent"] = int(swords[5])
+    r_record["r_sender_total_pkts_sent"] = int(swords[6])                   # valid for udp only
+    # literal "b"
+    r_record["r_receiver_interval_duration_sec"] = float(swords[8])
+    r_record["r_receiver_interval_pkts_received"] = int(swords[9])          # valid for udp only
+    r_record["r_receiver_interval_bytes_received"] = int(swords[10])
+    r_record["r_receiver_total_pkts_received"] = int(swords[11])            # valid for udp only
+    # literal "c"
+    r_record["r_pkt_received_time_sec"] = float(swords[13])
+    # literal "d"
+
+    r_record["rtt_sec"] = r_record["r_pkt_received_time_sec"] - r_record["r_pkt_sent_time_sec"]
+    r_record["rtt_ms"] = r_record["rtt_sec"] * 1000
+
+    try:
+        # first record received has zeros
+        sender_interval_rate_bps = (r_record["r_sender_interval_bytes_sent"] * 8.0) / r_record["r_sender_interval_duration_sec"]
+    except ZeroDivisionError:
+        sender_interval_rate_bps = 0
+
+    r_record["sender_interval_rate_mbps"] = sender_interval_rate_bps / (10 ** 6)
+
+    r_record["receiver_interval_rate_bytes_per_sec"] = r_record["r_receiver_interval_bytes_received"] / r_record["r_receiver_interval_duration_sec"]
+
+    receiver_interval_rate_bps = r_record["receiver_interval_rate_bytes_per_sec"] * 8
+    r_record["receiver_interval_rate_mbps"] = receiver_interval_rate_bps / (10 ** 6)
+
+    r_record["buffered_bytes"] = int( r_record["receiver_interval_rate_bytes_per_sec"] * r_record["rtt_sec"] )
+
+    if args.udp:
+        try:
+            # first record received has zeroes
+            r_record["sender_pps"] = int(r_record["r_sender_interval_pkts_sent"] / r_record["r_sender_interval_duration_sec"])
+        except ZeroDivisionError:
+            r_record["sender_pps"] = 0
+
+        r_record["receiver_pps"] = int(r_record["r_receiver_interval_pkts_received"] / r_record["r_receiver_interval_duration_sec"])
+        r_record["total_dropped"] = r_record["r_sender_total_pkts_sent"] - r_record["r_receiver_total_pkts_received"]
+
+        assert r_record["total_dropped"] >= 0
+    else:
+        r_record["sender_pps"] = -1
+        r_record["receiver_pps"] = -1
+        r_record["total_dropped"] = -1
+
+    return r_record

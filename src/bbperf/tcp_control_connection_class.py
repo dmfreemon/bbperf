@@ -74,7 +74,7 @@ class TcpControlConnectionClass:
             raise PeerDisconnectedException()
 
         if self.args and self.args.verbosity == 3:
-            print("control connection: recv: {}".format("*" + recv_bytes.decode() + "*"))
+            print("control connection: recv: {}".format(recv_bytes.decode()))
 
         return recv_bytes
 

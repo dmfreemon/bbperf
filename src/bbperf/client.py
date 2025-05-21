@@ -79,6 +79,8 @@ def client_mainline(args):
     if args.verbosity:
         print("created data connection ({})".format("udp" if args.udp else "tcp"))
 
+    shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
+
     # run test
 
     if args.verbosity:
@@ -95,7 +97,7 @@ def client_mainline(args):
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_term_queue,
-            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue),
+            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue, shared_udp_sending_rate_pps),
             daemon = True)
 
         control_receiver_process.start()
@@ -105,7 +107,7 @@ def client_mainline(args):
         data_sender_process = multiprocessing.Process(
             name = "datasender",
             target = data_sender_thread.run,
-            args = (args, data_sender_stdout_queue, data_sock, server_addr),
+            args = (args, data_sender_stdout_queue, data_sock, server_addr, shared_udp_sending_rate_pps),
             daemon = True)
 
         # test starts here

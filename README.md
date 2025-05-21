@@ -25,6 +25,8 @@ Features that distinguish this tool from existing tools include:
 
 * Automatic generation of graphs
 
+* The UDP option will automatically adjust the sending rate to just above the goodput rate so that any bufferbloat issues are measured.  This feature is enabled by default.  Simply omit the `-b/--bandwidth` option when running a `-u/--udp` test.
+
 ### Usage
 
 To run a test:
@@ -63,7 +65,7 @@ options:
   -t, --time SECONDS    duration of run in seconds
   -u, --udp             run in UDP mode (default: TCP mode)
   -b, --bandwidth BANDWIDTH
-                        n[kmgKMG] | n[kmgKMG]pps
+                        n[kmgKMG] | n[kmgKMG]pps, optional for both TCP and UDP
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
   -J, --json-file JSON_FILE
