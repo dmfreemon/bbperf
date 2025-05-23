@@ -30,62 +30,11 @@ def validate_args(args):
         raise Exception("ERROR: cannot specify both verbosity and quiet")
 
 
-def convert_bandwidth_str_to_int(arg_str):
-    # input string:
-    # n[kmgKMG] | n[kmgKMG]pps
+def convert_udp_pps_to_batch_info(packets_per_sec):
 
-    idx = arg_str.find("pps")
-    if idx > -1:
-        # found, so pps
-        is_pps = True
-        human_num_str = arg_str[:idx]
-    else:
-        # bps
-        is_pps = False
-        human_num_str = arg_str
+    batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_UDP_PKTS
 
-    last_char = human_num_str[-1:]
-
-    if last_char in [ "k", "K" ]:
-        ret_val = int(human_num_str[0:-1]) * (10 ** 3)
-
-    elif last_char in [ "m", "M" ]:
-        ret_val = int(human_num_str[0:-1]) * (10 ** 6)
-
-    elif last_char in [ "g", "G" ]:
-        ret_val = int(human_num_str[0:-1]) * (10 ** 9)
-
-    else:
-        ret_val = int(human_num_str)
-
-    return is_pps, ret_val
-
-
-def convert_bandwidth_spec_to_batch_info(args, bandwidth_is_pps, bandwidth_val_int):
-
-    if args.udp:
-        if bandwidth_is_pps:
-            packets_per_sec = bandwidth_val_int
-            sends_per_sec = packets_per_sec
-        else:
-            # udp/bps
-            packets_per_sec = (bandwidth_val_int / 8.0) / len(const.PAYLOAD_1K)
-            sends_per_sec = packets_per_sec
-
-        batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_UDP_PKTS
-
-    else:
-        # tcp
-        if bandwidth_is_pps:
-            packets_per_sec = bandwidth_val_int
-            sends_per_sec =  bandwidth_val_int / ( len(const.PAYLOAD_4K) / 1400.0 )
-        else:
-            packets_per_sec = (bandwidth_val_int / 8.0) / 1400.0
-            sends_per_sec = packets_per_sec / ( len(const.PAYLOAD_4K) / 1400.0 )
-
-        batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_TCP_PKTS
-
-    batches_per_sec = sends_per_sec / batch_size
+    batches_per_sec = packets_per_sec / batch_size
 
     if batches_per_sec < 1:
         batches_per_sec = 1

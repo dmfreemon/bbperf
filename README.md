@@ -8,11 +8,6 @@
 * Usage of buffers between the endpoints
 * Bufferbloat (when the usage of buffers is excessive)
 
-For UDP, it also measures:
-
-* Packet rates
-* Packet loss rates
-
 Features that distinguish this tool from existing tools include:
 
 * Latency, both unloaded and loaded, is measured by the same flow that is under test.
@@ -25,7 +20,7 @@ Features that distinguish this tool from existing tools include:
 
 * Automatic generation of graphs
 
-* The UDP option will automatically adjust the sending rate to just above the goodput rate so that any bufferbloat issues are measured.  This feature is enabled by default.  Simply omit the `-b/--bandwidth` option when running a `-u/--udp` test.
+* The UDP option will automatically adjust the sending rate to just above the goodput rate so that any bufferbloat issues are measured.
 
 ### Usage
 
@@ -49,7 +44,7 @@ The direction of data flow is from the client to the server.  That is reversed w
 
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-v] [-q] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k] [-J JSON_FILE]
+usage: bbperf.py [-h] [-v] [-q] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-g] [-k] [-J JSON_FILE]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
@@ -65,8 +60,6 @@ options:
   -R, --reverse         data flow in download direction (server to client)
   -t, --time SECONDS    duration of run in seconds
   -u, --udp             run in UDP mode (default: TCP mode)
-  -b, --bandwidth BANDWIDTH
-                        n[kmgKMG] | n[kmgKMG]pps, optional for both TCP and UDP
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
   -J, --json-file JSON_FILE

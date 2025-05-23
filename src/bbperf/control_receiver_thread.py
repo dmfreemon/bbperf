@@ -41,7 +41,7 @@ def run_recv_term_queue(args, stdout_queue, control_conn, results_queue, shared_
         results_queue.put(new_str)
 
         # udp autorate
-        if args.udp and not args.bandwidth:
+        if args.udp:
             udp_rate_manager.update(new_str)
 
     control_conn.close()
@@ -84,7 +84,7 @@ def run_recv_term_send(args, stdout_queue, control_conn, shared_udp_sending_rate
         control_conn.send(new_str.encode())
 
         # udp autorate
-        if args.udp and not args.bandwidth:
+        if args.udp:
             udp_rate_manager.update(new_str)
 
     control_conn.close()

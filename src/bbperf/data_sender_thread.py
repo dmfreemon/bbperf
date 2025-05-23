@@ -29,17 +29,10 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
                         stdout_queue.put("data sender: peer address: {}".format(peer_addr_for_udp))
                     break
 
-    # calculate sending rate
-
-    if args.bandwidth or args.udp:
-        if args.bandwidth:
-            bandwidth_is_pps, bandwidth_val_int = util.convert_bandwidth_str_to_int(args.bandwidth)
-        else:
-            # must be UDP with no bandwidth specified, so use UDP autorate
-            bandwidth_is_pps = True
-            bandwidth_val_int = shared_udp_sending_rate_pps.value
-
-        batch_size, delay_between_batches = util.convert_bandwidth_spec_to_batch_info(args, bandwidth_is_pps, bandwidth_val_int)
+    # udp autorate
+    if args.udp:
+        udp_pps = shared_udp_sending_rate_pps.value
+        batch_size, delay_between_batches = util.convert_udp_pps_to_batch_info(udp_pps)
 
     # start sending
 
@@ -149,11 +142,10 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
             accum_send_count = 0
             accum_bytes_sent = 0
 
-            # update udp rate when autorate in effect
-            if args.udp and not args.bandwidth:
-                bandwidth_is_pps = True
-                bandwidth_val_int = shared_udp_sending_rate_pps.value
-                batch_size, delay_between_batches = util.convert_bandwidth_spec_to_batch_info(args, bandwidth_is_pps, bandwidth_val_int)
+            # update udp autorate
+            if args.udp:
+                udp_pps = shared_udp_sending_rate_pps.value
+                batch_size, delay_between_batches = util.convert_udp_pps_to_batch_info(udp_pps)
 
         # send very slowly at first to establish unloaded latency
         if not is_calibrated:
@@ -167,7 +159,8 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
         if curr_time_sec > end_time:
             break
 
-        if args.bandwidth or args.udp:
+        # pause between udp batches if necessary
+        if args.udp:
             current_batch_counter += 1
             if current_batch_counter >= batch_size:
                 this_delay = delay_between_batches - (curr_time_sec - current_batch_start_time)
