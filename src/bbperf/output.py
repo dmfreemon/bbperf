@@ -43,13 +43,7 @@ def init(args0):
     tmpfile1 = tempfile.NamedTemporaryFile(prefix=tmp_graph_filename_prefix, delete=False)
     tmpfile2 = tempfile.NamedTemporaryFile(prefix=tmp_raw_filename_prefix, delete=False)
 
-    # requested JSON output file
-    if args.json_file:
-        try:
-            json_output = JsonOutputClass(args)
-        except Exception as e:
-            print("ERROR creating json output: {} {}".format(type(e), str(e)))
-            json_output = None
+    json_output = JsonOutputClass(args)
 
 
 def get_graph_data_file_name():
@@ -62,8 +56,7 @@ def term():
     tmpfile1.close()
     tmpfile2.close()
 
-    if json_output:
-        json_output.write_output_file()
+    json_output.write_output()
 
 
 def delete_data_files():
@@ -117,8 +110,7 @@ def print_output(s1):
         unloaded_rtt_sec = calibration.get_unloaded_latency_rtt_sec()
         unloaded_rtt_ms = unloaded_rtt_sec * 1000
 
-        if json_output:
-            json_output.set_unloaded_rtt_ms(unloaded_rtt_ms)
+        json_output.set_unloaded_rtt_ms(unloaded_rtt_ms)
 
         bdp_bytes = int( r_record["receiver_interval_rate_bytes_per_sec"] * unloaded_rtt_sec )
 
@@ -164,20 +156,19 @@ def print_output(s1):
         write_graph_data_to_file(lineout)
 
         # add to JSON output
-        if json_output:
-            new_entry = {
-                "sent_time_sec": r_record["r_pkt_sent_time_sec"],
-                "loaded_rtt_ms": r_record["rtt_ms"],
-                "receiver_throughput_rate_mbps": r_record["receiver_interval_rate_mbps"],
-                "excess_buffered_bytes": (r_record["buffered_bytes"] - bdp_bytes),
-                "receiver_pps": r_record["receiver_pps"],
-                "pkt_loss_percent": dropped_this_interval_percent
-            }
-            json_output.add_entry(new_entry)
+        new_entry = {
+            "sent_time_sec": r_record["r_pkt_sent_time_sec"],
+            "loaded_rtt_ms": r_record["rtt_ms"],
+            "receiver_throughput_rate_mbps": r_record["receiver_interval_rate_mbps"],
+            "excess_buffered_bytes": (r_record["buffered_bytes"] - bdp_bytes),
+            "receiver_pps": r_record["receiver_pps"],
+            "pkt_loss_percent": dropped_this_interval_percent
+        }
+        json_output.add_entry(new_entry)
 
         # write to stdout at the rate of one line per second
         # each stdout line will be a 0.1s snapshot
-        if (curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) or args.verbosity:
+        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
             if print_header2:
                 print("  sent_time   recv_time  sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms  rtt_ms  BDP_bytes buffered_bytes  bloat   pkts_dropped  drop%")
                 print_header2 = False
@@ -208,7 +199,7 @@ def print_output(s1):
     else:
         calibration.update_rtt_sec(r_record["rtt_sec"])
 
-        if curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC):
+        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
             if print_header1:
                 print("calibrating")
                 print("  sent_time   recv_time     rtt_ms")

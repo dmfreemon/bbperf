@@ -7,7 +7,7 @@ import socket
 from . import const
 from . import util
 
-
+# args are client args
 def run(args, stdout_queue, control_conn, data_sock, peer_addr):
 
     if args.verbosity:
@@ -45,7 +45,8 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
                     if peer_addr_for_udp is None:
                         # first packet is received
                         peer_addr_for_udp = pkt_from_addr
-                        print("peer address: {}".format(peer_addr_for_udp))
+                        if not args.quiet:
+                            print("peer address: {}".format(peer_addr_for_udp))
                     else:
                         raise Exception("ERROR: datagram from wrong peer address")
 

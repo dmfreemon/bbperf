@@ -44,7 +44,7 @@ class UdpRateManagerClass:
             # do not bother with tiny changes
             return
 
-        if self.args.verbosity == 3:
+        if self.args.verbosity > 1:
             print("UdpRateManager: update: receiver pps {} old rate {} new rate {}".format(
                 r_record["receiver_pps"],
                 self.shared_udp_sending_rate_pps.value,

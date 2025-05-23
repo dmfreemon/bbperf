@@ -214,11 +214,11 @@ def client_mainline(args):
     graphdatafilename = output.get_graph_data_file_name()
     rawdatafilename = output.get_raw_data_file_name()
 
-    if args.graph:
+    if args.graph and not args.quiet:
         graph.create_graph(args, graphdatafilename)
         print("created graph: {}".format(graphdatafilename + ".png"))
 
-    if args.keep:
+    if args.keep and not args.quiet:
         print("keeping graph data file: {}".format(graphdatafilename))
         print("keeping raw data file: {}".format(rawdatafilename))
     else:

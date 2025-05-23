@@ -45,7 +45,7 @@ class TcpControlConnectionClass:
                 num_bytes_sent
             ))
 
-        if self.args and self.args.verbosity == 3:
+        if self.args and self.args.verbosity > 1:
             print("control connection: send: {}".format(payload_bytes.decode()))
 
 
@@ -73,7 +73,7 @@ class TcpControlConnectionClass:
         if len(recv_bytes) == 0:
             raise PeerDisconnectedException()
 
-        if self.args and self.args.verbosity == 3:
+        if self.args and self.args.verbosity > 1:
             print("control connection: recv: {}".format(recv_bytes.decode()))
 
         return recv_bytes

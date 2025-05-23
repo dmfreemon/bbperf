@@ -17,7 +17,12 @@ def mainline():
     parser.add_argument("-v", "--verbosity",
         action="count",
         default=0,
-        help="increase output verbosity")
+        help="increase output verbosity (can be repeated)")
+
+    parser.add_argument("-q", "--quiet",
+        action="count",
+        default=0,
+        help="decrease output verbosity (can be repeated)")
 
     parser.add_argument("-s", "--server",
         action="store_true",

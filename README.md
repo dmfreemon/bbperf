@@ -49,13 +49,14 @@ The direction of data flow is from the client to the server.  That is reversed w
 
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-v] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k] [-J JSON_FILE]
+usage: bbperf.py [-h] [-v] [-q] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-b BANDWIDTH] [-g] [-k] [-J JSON_FILE]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
 options:
   -h, --help            show this help message and exit
-  -v, --verbosity       increase output verbosity
+  -v, --verbosity       increase output verbosity (can be repeated)
+  -q, --quiet           decrease output verbosity (can be repeated)
   -s, --server          run in server mode
   -c, --client SERVER_IP
                         run in client mode
@@ -87,6 +88,15 @@ Output from `bbperf` includes the following information:
     bloat           Ratio of buffered bytes to BDP
     pkts_dropped    number of packets dropped (UDP only)
     drop%           percentage of packets dropped (UDP only)
+```
+
+Output to standard out is controlled via the `--verbosity` and `--quiet` options as follows:
+```
+    -qq           nothing to stdout except errors
+    -q            run summary in json format
+(neither option)  progress update once per second plus run summary in json format (default)
+    -v            progress update once per 0.1 seconds, additional output, and run summary in json format
+    -vv           debugging info useful for developers only
 ```
 
 ### Installation

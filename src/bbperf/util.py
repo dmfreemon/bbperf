@@ -26,6 +26,9 @@ def validate_args(args):
     if args.time < 10:
         raise Exception("ERROR: time must be at least 10 seconds")
 
+    if args.verbosity and args.quiet:
+        raise Exception("ERROR: cannot specify both verbosity and quiet")
+
 
 def convert_bandwidth_str_to_int(arg_str):
     # input string:
