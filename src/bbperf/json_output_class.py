@@ -27,13 +27,30 @@ class JsonOutputClass:
         pkt_loss_percent_list = []
 
         for entry in self.output_dict["entries"]:
-            loaded_rtt_ms_list.append(entry["loaded_rtt_ms"])
-            receiver_throughput_rate_mbps_list.append(entry["receiver_throughput_rate_mbps"])
-            excess_buffered_bytes_list.append(entry["excess_buffered_bytes"])
-            receiver_pps_list.append(entry["receiver_pps"])
-            pkt_loss_percent_list.append(entry["pkt_loss_percent"])
+
+            sender_throughput_rate_mbps = entry["sender_throughput_rate_mbps"]
+            receiver_throughput_rate_mbps = entry["receiver_throughput_rate_mbps"]
+            throughput_rate_ratio = abs(sender_throughput_rate_mbps - receiver_throughput_rate_mbps) / receiver_throughput_rate_mbps
+
+            # only add entries that capture then flow when it is at max bloat potential
+            if (  (self.args.udp and entry["pkt_loss_percent"] > 0) or
+                ((not self.args.udp) and throughput_rate_ratio < 0.03) and (receiver_throughput_rate_mbps > 1.0)  ):
+
+                loaded_rtt_ms_list.append(entry["loaded_rtt_ms"])
+                receiver_throughput_rate_mbps_list.append(entry["receiver_throughput_rate_mbps"])
+                excess_buffered_bytes_list.append(entry["excess_buffered_bytes"])
+                receiver_pps_list.append(entry["receiver_pps"])
+                pkt_loss_percent_list.append(entry["pkt_loss_percent"])
+
+        num_samples = len(loaded_rtt_ms_list)
+        if num_samples < 10:
+            if not self.args.quiet:
+                print("WARNING: not enough valid samples for summary statistics: {} samples.  Increase the duration of the run using the '-t' option.".format(num_samples))
+            return
 
         summary_dict = self.output_dict["summary"] = {}
+
+        summary_dict["num_samples"] = num_samples
 
         summary_dict["unloaded_rtt_ms"] = self.unloaded_rtt_ms
 
@@ -71,7 +88,7 @@ class JsonOutputClass:
         self.create_aggregate_stats()
 
         # write to stdout
-        if self.args.quiet < 2:
+        if (self.args.quiet < 2) and ("summary" in self.output_dict):
             str_out = json.dumps(self.output_dict["summary"], indent=4)
             print(str_out)
 
