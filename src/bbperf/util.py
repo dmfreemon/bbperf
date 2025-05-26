@@ -1,6 +1,7 @@
 # Copyright (c) 2024 Cloudflare, Inc.
 # Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
+import sys
 import socket
 import ipaddress
 
@@ -139,7 +140,12 @@ def parse_r_record(args, s1):
         r_record["receiver_pps"] = int(r_record["r_receiver_interval_pkts_received"] / r_record["r_receiver_interval_duration_sec"])
         r_record["total_dropped"] = r_record["r_sender_total_pkts_sent"] - r_record["r_receiver_total_pkts_received"]
 
-        assert r_record["total_dropped"] >= 0
+        if r_record["total_dropped"] < 0:
+            print("ERROR: total dropped is less than zero: sent {} received {}".format(
+                r_record["r_sender_total_pkts_sent"],
+                r_record["r_receiver_total_pkts_received"]),
+                file=sys.stderr)
+
     else:
         r_record["sender_pps"] = -1
         r_record["receiver_pps"] = -1
