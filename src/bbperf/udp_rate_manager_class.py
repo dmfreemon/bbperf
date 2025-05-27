@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Cloudflare, Inc.
+# Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
 import numpy
 
@@ -15,9 +17,7 @@ class UdpRateManagerClass:
         self.last_new_rate = 0
 
     # control receiver calls this with interval pps (every 0.1 seconds)
-    def update(self, new_str):
-        r_record = util.parse_r_record(self.args, new_str)
-
+    def update(self, r_record):
         # gut checks to avoid updating based on bogus input
         if r_record["r_sender_total_pkts_sent"] < 100:
             return

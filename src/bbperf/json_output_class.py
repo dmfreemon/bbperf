@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Cloudflare, Inc.
+# Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
 import sys
 import json
@@ -28,15 +30,7 @@ class JsonOutputClass:
         pkt_loss_percent_list = []
 
         for entry in self.output_dict["entries"]:
-
-            sender_throughput_rate_mbps = entry["sender_throughput_rate_mbps"]
-            receiver_throughput_rate_mbps = entry["receiver_throughput_rate_mbps"]
-            throughput_rate_ratio = abs(sender_throughput_rate_mbps - receiver_throughput_rate_mbps) / receiver_throughput_rate_mbps
-
-            # only add entries that capture then flow when it is at max bloat potential
-            if (  (self.args.udp and entry["pkt_loss_percent"] > 0) or
-                ((not self.args.udp) and throughput_rate_ratio < 0.03) and (receiver_throughput_rate_mbps > 1.0)  ):
-
+            if entry["is_sample_valid"]:
                 loaded_rtt_ms_list.append(entry["loaded_rtt_ms"])
                 receiver_throughput_rate_mbps_list.append(entry["receiver_throughput_rate_mbps"])
                 excess_buffered_bytes_list.append(entry["excess_buffered_bytes"])

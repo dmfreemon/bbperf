@@ -5,9 +5,9 @@ import os
 import time
 import tempfile
 
-from . import calibration
 from . import const
 from . import util
+
 from .json_output_class import JsonOutputClass
 
 
@@ -19,8 +19,8 @@ print_header1 = True
 print_header2 = True
 print_header3 = True
 relative_start_time_sec = None
-total_dropped_as_of_last_interval = 0
 json_output = None
+unloaded_latency_rtt_ms = None
 
 
 def init(args0):
@@ -89,7 +89,7 @@ def print_output(s1):
     global print_header2
     global print_header3
     global relative_start_time_sec
-    global total_dropped_as_of_last_interval
+    global unloaded_latency_rtt_ms
 
     write_raw_data_to_file(s1)
 
@@ -107,29 +107,14 @@ def print_output(s1):
         relative_pkt_received_time_sec = r_record["r_pkt_received_time_sec"] - relative_start_time_sec
 
     if r_record["r_record_type"] == "run":
-        unloaded_rtt_sec = calibration.get_unloaded_latency_rtt_sec()
-        unloaded_rtt_ms = unloaded_rtt_sec * 1000
+        json_output.set_unloaded_rtt_ms(unloaded_latency_rtt_ms)
 
-        json_output.set_unloaded_rtt_ms(unloaded_rtt_ms)
-
-        bdp_bytes = int( r_record["receiver_interval_rate_bytes_per_sec"] * unloaded_rtt_sec )
+        bdp_bytes = int( r_record["receiver_interval_rate_bytes_per_sec"] * (unloaded_latency_rtt_ms / 1000.0) )
 
         if bdp_bytes > 0:
             bloat_factor = float(r_record["buffered_bytes"]) / bdp_bytes
         else:
             bloat_factor = 0
-
-        if args.udp:
-            dropped_this_interval = r_record["total_dropped"] - total_dropped_as_of_last_interval
-            if dropped_this_interval < 0:
-                dropped_this_interval = 0
-            dropped_this_interval_percent = (dropped_this_interval * 100.0) / r_record["r_sender_interval_pkts_sent"]
-            # remember this for next loop:
-            total_dropped_as_of_last_interval = r_record["total_dropped"]
-        else:
-            # tcp
-            dropped_this_interval = -1
-            dropped_this_interval_percent = -1
 
         if print_header3:
             lineout = "sent_time recv_time sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms rtt_ms BDP_bytes buffered_bytes bloat_factor pkts_dropped pkts_dropped_percent"
@@ -144,13 +129,13 @@ def print_output(s1):
             r_record["sender_interval_rate_mbps"],
             r_record["receiver_pps"],
             r_record["receiver_interval_rate_mbps"],
-            unloaded_rtt_ms,
+            unloaded_latency_rtt_ms,
             r_record["rtt_ms"],
             bdp_bytes,
             r_record["buffered_bytes"],
             bloat_factor,
-            dropped_this_interval,
-            dropped_this_interval_percent
+            r_record["interval_dropped"],
+            r_record["interval_dropped_percent"]
             )
 
         write_graph_data_to_file(lineout)
@@ -166,7 +151,8 @@ def print_output(s1):
             "receiver_throughput_rate_mbps": r_record["receiver_interval_rate_mbps"],
             "excess_buffered_bytes": excess,
             "receiver_pps": r_record["receiver_pps"],
-            "pkt_loss_percent": dropped_this_interval_percent
+            "pkt_loss_percent": r_record["interval_dropped_percent"],
+            "is_sample_valid": r_record["is_sample_valid"]
         }
         json_output.add_entry(new_entry)
 
@@ -177,10 +163,10 @@ def print_output(s1):
                 print("  sent_time   recv_time  sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms  rtt_ms  BDP_bytes buffered_bytes  bloat   pkts_dropped  drop%")
                 print_header2 = False
 
-            if dropped_this_interval_percent < 0:
-                dropped_this_interval_percent_str = "  n/a"
+            if r_record["interval_dropped_percent"] < 0:
+                dropped_percent_str = "  n/a"
             else:
-                dropped_this_interval_percent_str = "{:6.3f}%".format(dropped_this_interval_percent)
+                dropped_percent_str = "{:6.3f}%".format(r_record["interval_dropped_percent"])
 
             print("{:11.6f} {:11.6f} {:8d}   {:11.3f}   {:8d}    {:11.3f}    {:8.3f}    {:9.3f}  {:9d}    {:9d}    {:6.1f}x    {:6d}     {}".format(
                 relative_pkt_sent_time_sec,
@@ -189,28 +175,28 @@ def print_output(s1):
                 r_record["sender_interval_rate_mbps"],
                 r_record["receiver_pps"],
                 r_record["receiver_interval_rate_mbps"],
-                unloaded_rtt_ms,
+                unloaded_latency_rtt_ms,
                 r_record["rtt_ms"],
                 bdp_bytes,
                 r_record["buffered_bytes"],
                 bloat_factor,
-                dropped_this_interval,
-                dropped_this_interval_percent_str
+                r_record["interval_dropped"],
+                dropped_percent_str
                 ))
 
             last_line_to_stdout_time = curr_time
 
     else:
-        calibration.update_rtt_sec(r_record["rtt_sec"])
+        # calibrating
+        # do we have a new unloaded latency?
+        if (unloaded_latency_rtt_ms is None) or (r_record["rtt_ms"] < unloaded_latency_rtt_ms):
+            unloaded_latency_rtt_ms = r_record["rtt_ms"]
 
         if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
             if print_header1:
                 print("calibrating")
                 print("  sent_time   recv_time     rtt_ms")
                 print_header1 = False
-
-            unloaded_latency_rtt_sec = calibration.get_unloaded_latency_rtt_sec()
-            unloaded_latency_rtt_ms = unloaded_latency_rtt_sec * 1000
 
             print("{:11.6f} {:11.6f} {:11.6f}".format(
                 relative_pkt_sent_time_sec,

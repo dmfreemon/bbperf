@@ -7,11 +7,10 @@ import select
 
 from . import util
 from . import const
-from . import calibration
 
 
 # falling off the end of this method terminates the process
-def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
+def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
         stdout_queue.put("data sender: start of process")
 
@@ -41,9 +40,6 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
 
     curr_time_sec = time.time()
 
-    # stop sending time
-    end_time = curr_time_sec + args.time
-
     interval_start_time = curr_time_sec
     interval_end_time = interval_start_time + const.SAMPLE_INTERVAL_SEC
 
@@ -58,7 +54,12 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
 
     while True:
         curr_time_sec = time.time()
-        is_calibrated = calibration.is_calibrated()
+
+        if (shared_run_mode.value == const.RUN_MODE_CALIBRATING):
+            is_calibrated = False
+        else:
+            is_calibrated = True
+
         record_type = b'run' if is_calibrated else b'cal'
 
         # we want to be fast here, since this is data write loop, so use ba.extend
@@ -132,7 +133,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
             interval_send_count = accum_send_count
             interval_bytes_sent = accum_bytes_sent
 
-            if args.verbosity > 1:
+            if args.verbosity > 2:
                 print("data_sender: a {} {} {} {} {} {} b".format(
                     record_type, curr_time_sec, interval_time_sec, interval_send_count, interval_bytes_sent, total_send_counter)
                 )
@@ -156,7 +157,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
             continue
 
         # normal end of test
-        if curr_time_sec > end_time:
+        if shared_run_mode.value == const.RUN_MODE_STOP:
             break
 
         # pause between udp batches if necessary
@@ -169,6 +170,18 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_udp_sending_rate_pps):
                 current_batch_start_time += delay_between_batches
                 current_batch_counter = 0
 
+
+    # send STOP message
+    if args.udp:
+        if args.verbosity:
+            stdout_queue.put("data sender: sending udp stop message")
+        payload_bytes = const.UDP_STOP_MSG.encode()
+        # 3 times just in case the first one does not make it to the destination
+        data_sock.sendto(payload_bytes, peer_addr_for_udp)
+        time.sleep(0.1)
+        data_sock.sendto(payload_bytes, peer_addr_for_udp)
+        time.sleep(0.1)
+        data_sock.sendto(payload_bytes, peer_addr_for_udp)
 
     util.done_with_socket(data_sock)
 

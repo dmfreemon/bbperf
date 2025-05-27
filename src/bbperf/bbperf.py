@@ -14,16 +14,6 @@ def mainline():
 
     parser = argparse.ArgumentParser(description="bbperf: end to end performance and bufferbloat measurement tool")
 
-    parser.add_argument("-v", "--verbosity",
-        action="count",
-        default=0,
-        help="increase output verbosity (can be repeated)")
-
-    parser.add_argument("-q", "--quiet",
-        action="count",
-        default=0,
-        help="decrease output verbosity (can be repeated)")
-
     parser.add_argument("-s", "--server",
         action="store_true",
         default=False,
@@ -38,7 +28,12 @@ def mainline():
         metavar="SERVER_PORT",
         type=int,
         default=const.SERVER_PORT,
-        help="server port (default: 5301)")
+        help="server port (default: {})".format(const.SERVER_PORT))
+
+    parser.add_argument("-u", "--udp",
+        action="store_true",
+        default=False,
+        help="run in UDP mode (default: TCP mode)")
 
     parser.add_argument("-R", "--reverse",
         action="store_true",
@@ -48,13 +43,22 @@ def mainline():
     parser.add_argument("-t", "--time",
         metavar="SECONDS",
         type=int,
-        default=const.DURATION_SEC,
-        help="duration of run in seconds")
+        default=const.DEFAULT_VALID_DATA_COLLECTION_TIME_SEC,
+        help="duration in seconds to collect valid data samples (dafault: {})".format(const.DEFAULT_VALID_DATA_COLLECTION_TIME_SEC))
 
-    parser.add_argument("-u", "--udp",
-        action="store_true",
-        default=False,
-        help="run in UDP mode (default: TCP mode)")
+    parser.add_argument("-v", "--verbosity",
+        action="count",
+        default=0,
+        help="increase output verbosity (can be repeated)")
+
+    parser.add_argument("-q", "--quiet",
+        action="count",
+        default=0,
+        help="decrease output verbosity (can be repeated)")
+
+    parser.add_argument("-J", "--json-file",
+        default=None,
+        help="JSON output file")
 
     parser.add_argument("-g", "--graph",
         action="store_true",
@@ -65,10 +69,6 @@ def mainline():
         action="store_true",
         default=False,
         help="keep data file")
-
-    parser.add_argument("-J", "--json-file",
-        default=None,
-        help="JSON output file")
 
     args = parser.parse_args()
 

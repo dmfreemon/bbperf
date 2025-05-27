@@ -13,7 +13,6 @@ from . import data_udp_ping_sender_thread
 from . import data_receiver_thread
 from . import control_receiver_thread
 from . import util
-from . import calibration
 from . import const
 from . import output
 from . import graph
@@ -79,14 +78,13 @@ def client_mainline(args):
     if args.verbosity:
         print("created data connection ({})".format("udp" if args.udp else "tcp"))
 
+    shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
     shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
 
     # run test
 
     if args.verbosity:
         print("test running")
-
-    calibration.start()
 
     if not args.reverse:
         # up direction
@@ -97,7 +95,7 @@ def client_mainline(args):
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_term_queue,
-            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue, shared_udp_sending_rate_pps),
+            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         control_receiver_process.start()
@@ -107,7 +105,7 @@ def client_mainline(args):
         data_sender_process = multiprocessing.Process(
             name = "datasender",
             target = data_sender_thread.run,
-            args = (args, data_sender_stdout_queue, data_sock, server_addr, shared_udp_sending_rate_pps),
+            args = (args, data_sender_stdout_queue, data_sock, server_addr, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         # test starts here

@@ -19,8 +19,6 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
 
     peer_addr_for_udp = peer_addr
 
-    end_time = None
-
     total_recv_calls = 0
 
     interval_start_time = time.time()
@@ -69,27 +67,24 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
         except socket.timeout:
             pass
 
-        curr_time_sec = time.time()
-
-        if end_time and (curr_time_sec > end_time):
+        if args.udp and num_bytes_read == len(const.UDP_STOP_MSG) and (bytes_read.decode() == const.UDP_STOP_MSG):
             if args.verbosity:
-                stdout_queue.put("data receiver thread: end of test, exiting")
-            # exit process
+                stdout_queue.put("data receiver thread: received udp stop message, exiting")
             break
 
         if num_bytes_read == 0:
             # recv must have timed out, skip the rest of this loop
             continue
 
-        total_recv_calls += 1
+        curr_time_sec = time.time()
 
-        if not end_time:
-            # first data packet arrived, so test just started running
-            end_time = curr_time_sec + args.time
+        total_recv_calls += 1
 
         interval_pkts_received += 1                     # valid for udp only
         interval_bytes_received += num_bytes_read
 
+        # end of interval
+        # send interval record over control connection
         if curr_time_sec > interval_end_time:
             interval_time_sec = curr_time_sec - interval_start_time
 

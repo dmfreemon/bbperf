@@ -52,32 +52,36 @@ To run a test:
 
 `bbperf` will use port 5301 between the client and server (by default).
 
-The first 5 seconds performs a calibration, during which it captures the unloaded latency between endpoints.
+The first few seconds performs a calibration, during which it captures the unloaded latency between endpoints.
 
 The direction of data flow is from the client to the server.  That is reversed when the "-R" option is specified.
 
+The duration of this tool is non-deterministic.  The time option (`-t`/`--time`) specifies how long to run _after_ valid data samples are observed.  `bbperf` will automatically detect when it has enough data samples for the calibration, which establishes the unloaded latency value.
+
+Should `bbperf` not detect any valid data samples for 60 seconds after calibration is complete, the tool will exit without results.  An example of when that might happen is if the sending host is cpu constrained such that no bottleneck is created on the network.
+
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-v] [-q] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-R] [-t SECONDS] [-u] [-g] [-k] [-J JSON_FILE]
+usage: bbperf.py [-h] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-u] [-R] [-t SECONDS] [-v] [-q] [-J JSON_FILE] [-g] [-k]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
 options:
   -h, --help            show this help message and exit
-  -v, --verbosity       increase output verbosity (can be repeated)
-  -q, --quiet           decrease output verbosity (can be repeated)
   -s, --server          run in server mode
   -c, --client SERVER_IP
                         run in client mode
   -p, --port SERVER_PORT
                         server port (default: 5301)
-  -R, --reverse         data flow in download direction (server to client)
-  -t, --time SECONDS    duration of run in seconds
   -u, --udp             run in UDP mode (default: TCP mode)
-  -g, --graph           generate graph (requires gnuplot on the client host)
-  -k, --keep            keep data file
+  -R, --reverse         data flow in download direction (server to client)
+  -t, --time SECONDS    duration in seconds to collect valid data samples (dafault: 20)
+  -v, --verbosity       increase output verbosity (can be repeated)
+  -q, --quiet           decrease output verbosity (can be repeated)
   -J, --json-file JSON_FILE
                         JSON output file
+  -g, --graph           generate graph (requires gnuplot)
+  -k, --keep            keep data file
 ```
 
 Output from `bbperf` includes the following information:

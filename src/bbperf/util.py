@@ -21,12 +21,6 @@ def validate_args(args):
     if args.port > 65535:
         raise Exception("ERROR: invalid server port {}".format(args.port))
 
-    if args.time <= 0:
-        raise Exception("ERROR: argument time must be positive")
-
-    if args.time < 10:
-        raise Exception("ERROR: time must be at least 10 seconds")
-
     if args.verbosity and args.quiet:
         raise Exception("ERROR: cannot specify both verbosity and quiet")
 
@@ -110,6 +104,9 @@ def parse_r_record(args, s1):
     r_record["r_receiver_total_pkts_received"] = int(swords[11])            # valid for udp only
     # literal "c"
     r_record["r_pkt_received_time_sec"] = float(swords[13])
+    r_record["interval_dropped"] = int(swords[14])
+    r_record["interval_dropped_percent"] = float(swords[15])
+    r_record["is_sample_valid"] = int(swords[16])
     # literal "d"
 
     r_record["rtt_sec"] = r_record["r_pkt_received_time_sec"] - r_record["r_pkt_sent_time_sec"]
