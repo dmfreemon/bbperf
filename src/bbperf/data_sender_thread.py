@@ -122,8 +122,11 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
             continue
 
         except socket.timeout:
-            # we did not send, loop back up and try again
-            continue
+            # we did not send
+            # the timeout value here is 20 seconds, so that is end of days -- kill everything
+            error_msg = "FATAL: data_sender_thread: socket timeout"
+            stdout_queue.put(error_msg)
+            raise Exception(error_msg)
 
         total_send_counter += 1
         accum_send_count += 1

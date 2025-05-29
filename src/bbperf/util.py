@@ -58,6 +58,10 @@ def threads_are_running(thread_list):
     for t in thread_list:
         if t.is_alive():
             any_running = True
+        else:
+            if t.exitcode != 0:
+                # thread existing abnormally -- kill everything and go home
+                raise Exception("FATAL: one of the subprocesses existed abnormally, name: {}, exitcode: {}".format(t.name, t.exitcode))
 
     return any_running
 

@@ -27,6 +27,9 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
     interval_pkts_received = 0
     interval_bytes_received = 0
 
+    socket_timeout_timer_active = False
+    socket_timeout_timer_start_time = None
+
     # do until end of test duration
     # we will not get a connection close with udp
     while True:
@@ -64,8 +67,15 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
                     # exit process
                     break
 
+            socket_timeout_timer_active = False
+
         except socket.timeout:
-            pass
+            if socket_timeout_timer_active:
+                if (time.time() - socket_timeout_timer_start_time) > const.SOCKET_TIMEOUT_SEC:
+                    raise Exception("FATAL: data_receiver_thread: timeout during data socket read")
+            else:
+                socket_timeout_timer_active = True
+                socket_timeout_timer_start_time = time.time()
 
         if args.udp and num_bytes_read == len(const.UDP_STOP_MSG) and (bytes_read.decode() == const.UDP_STOP_MSG):
             if args.verbosity:
