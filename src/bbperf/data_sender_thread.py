@@ -16,8 +16,9 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
 
     peer_addr_for_udp = peer_addr
 
+    # this (data sender) is running on server (aka reverse flow)
+    # for udp, we have to wait for a ping message so we know where to send the data packets
     if args.udp and (peer_addr_for_udp is None):
-        # for udp, we have to wait for a ping message so we know where to send the data packets
         while True:
             # blocking
             bytes_read, pkt_from_addr = data_sock.recvfrom(const.BUFSZ)
