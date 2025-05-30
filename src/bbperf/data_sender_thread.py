@@ -53,10 +53,17 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
 
     total_send_counter = 1
 
+    calibration_start_time = time.time()
+
     while True:
         curr_time_sec = time.time()
 
         if (shared_run_mode.value == const.RUN_MODE_CALIBRATING):
+            if curr_time_sec > (calibration_start_time + const.MAX_DURATION_CALIBRATION_TIME_SEC):
+                error_msg = "FATAL: data_sender_thread: time in calibration exceeded max allowed"
+                stdout_queue.put(error_msg)
+                raise Exception(error_msg)
+
             is_calibrated = False
         else:
             is_calibrated = True
