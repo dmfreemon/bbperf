@@ -12,9 +12,9 @@ from .run_mode_manager_class import RunModeManagerClass
 # direction up, runs on client
 # args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_queue(args, stdout_queue, control_conn, results_queue, shared_run_mode, shared_udp_sending_rate_pps):
+def run_recv_term_queue(args, control_conn, results_queue, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
-        stdout_queue.put("starting control receiver process: run_recv_term_queue")
+        print("starting control receiver process: run_recv_term_queue", flush=True)
 
     run_mode_manager = RunModeManagerClass(args, shared_run_mode)
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
@@ -27,13 +27,13 @@ def run_recv_term_queue(args, stdout_queue, control_conn, results_queue, shared_
 
         except ConnectionResetError:
             if args.verbosity:
-                stdout_queue.put("connection reset error")
+                print("connection reset error", flush=True)
             # exit process
             break
 
         except PeerDisconnectedException:
             if args.verbosity:
-                stdout_queue.put("peer disconnected (control socket)")
+                print("peer disconnected (control socket)", flush=True)
             # exit process
             break
 
@@ -63,20 +63,20 @@ def run_recv_term_queue(args, stdout_queue, control_conn, results_queue, shared_
         results_queue.put(new_str)
 
         if args.verbosity > 1:
-            stdout_queue.put("control receiver process: created: {}".format(new_str))
+            print("control receiver process: created: {}".format(new_str), flush=True)
 
     control_conn.close()
 
     if args.verbosity:
-        stdout_queue.put("exiting control receiver process: run_recv_term_queue")
+        print("exiting control receiver process: run_recv_term_queue", flush=True)
 
 
 # direction down, runs on server
 # args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_send(args, stdout_queue, control_conn, shared_run_mode, shared_udp_sending_rate_pps):
+def run_recv_term_send(args, control_conn, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
-        stdout_queue.put("starting control receiver process: run_recv_term_send")
+        print("starting control receiver process: run_recv_term_send", flush=True)
 
     run_mode_manager = RunModeManagerClass(args, shared_run_mode)
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
@@ -89,13 +89,13 @@ def run_recv_term_send(args, stdout_queue, control_conn, shared_run_mode, shared
 
         except ConnectionResetError:
             if args.verbosity:
-                stdout_queue.put("connection reset error")
+                print("connection reset error", flush=True)
             # exit process
             break
 
         except PeerDisconnectedException:
             if args.verbosity:
-                stdout_queue.put("peer disconnected (control socket)")
+                print("peer disconnected (control socket)", flush=True)
             # exit process
             break
 
@@ -125,21 +125,21 @@ def run_recv_term_send(args, stdout_queue, control_conn, shared_run_mode, shared
         control_conn.send(new_str.encode())
 
         if args.verbosity > 1:
-            stdout_queue.put("control receiver process: created: {}".format(new_str))
+            print("control receiver process: created: {}".format(new_str), flush=True)
 
 
     control_conn.close()
 
     if args.verbosity:
-        stdout_queue.put("exiting control receiver process: run_recv_term_send")
+        print("exiting control receiver process: run_recv_term_send", flush=True)
 
 
 # direction down, runs on client (passthru)
 # args are client args (not server args) -- this always runs on client
 # falling off the end of this method terminates the process
-def run_recv_queue(args, stdout_queue, control_conn, results_queue):
+def run_recv_queue(args, control_conn, results_queue):
     if args.verbosity:
-        stdout_queue.put("starting control receiver process: run_recv_queue")
+        print("starting control receiver process: run_recv_queue", flush=True)
 
     while True:
         try:
@@ -148,13 +148,13 @@ def run_recv_queue(args, stdout_queue, control_conn, results_queue):
 
         except ConnectionResetError:
             if args.verbosity:
-                stdout_queue.put("connection reset error")
+                print("connection reset error", flush=True)
             # exit process
             break
 
         except PeerDisconnectedException:
             if args.verbosity:
-                stdout_queue.put("peer disconnected (control socket)")
+                print("peer disconnected (control socket)", flush=True)
             # exit process
             break
 
@@ -166,4 +166,4 @@ def run_recv_queue(args, stdout_queue, control_conn, results_queue):
     control_conn.close()
 
     if args.verbosity:
-        stdout_queue.put("exiting control receiver process: run_recv_queue")
+        print("exiting control receiver process: run_recv_queue", flush=True)

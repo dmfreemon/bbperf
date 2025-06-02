@@ -32,7 +32,7 @@ def server_mainline(args):
     server_port = listen_sock.getsockname()[1]
 
     while True:
-        print("server listening on port ", server_port)
+        print("server listening on port ", server_port, flush=True)
 
         data_conn_verification_str = "d" + const.SOFT_SECRET + " "
 
@@ -44,19 +44,19 @@ def server_mainline(args):
         control_conn = TcpControlConnectionClass(control_sock)
         control_conn.set_args(args)
 
-        print("client connected (control socket)")
+        print("client connected (control socket)", flush=True)
 
         control_conn.recv_and_check_validation_string()
 
-        print("waiting for args from client")
+        print("waiting for args from client", flush=True)
 
         # blocking
         client_args = control_conn.receive_args_from_client()
 
         if client_args.verbosity:
-            print("received args from client: {}".format(vars(client_args)))
+            print("received args from client: {}".format(vars(client_args)), flush=True)
         else:
-            print("received args from client")
+            print("received args from client", flush=True)
 
         control_conn.set_args(client_args)
 
@@ -65,7 +65,7 @@ def server_mainline(args):
         if client_args.udp:
 
             if client_args.verbosity:
-                print("creating data connection (udp)")
+                print("creating data connection (udp)", flush=True)
 
             data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             data_sock.bind(("0.0.0.0", server_port))
@@ -73,7 +73,7 @@ def server_mainline(args):
         else:
 
             if client_args.verbosity:
-                print("creating data connection (tcp)")
+                print("creating data connection (tcp)", flush=True)
 
             # blocking
             data_sock, _ = listen_sock.accept()
@@ -89,26 +89,24 @@ def server_mainline(args):
             if payload_str != data_conn_verification_str:
                 raise Exception("ERROR: client connection invalid, ident: {} payload {}".format(data_conn_verification_str[0], payload_str))
 
-        print("created data connection ({})".format("udp" if client_args.udp else "tcp"))
+        print("created data connection ({})".format("udp" if client_args.udp else "tcp"), flush=True)
 
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
         shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
 
         # run test
 
-        print("test running")
+        print("test running", flush=True)
 
         if not client_args.reverse:
             # direction up
-
-            data_receiver_stdout_queue = multiprocessing.Queue()
 
             client_addr = None
 
             data_receiver_process = multiprocessing.Process(
                 name = "datareceiver",
                 target = data_receiver_thread.run,
-                args = (client_args, data_receiver_stdout_queue, control_conn, data_sock, client_addr),
+                args = (client_args, control_conn, data_sock, client_addr),
                 daemon = True)
 
             data_receiver_process.start()
@@ -116,26 +114,19 @@ def server_mainline(args):
             thread_list = []
             thread_list.append(data_receiver_process)
 
-            queue_list = []
-            queue_list.append([data_receiver_stdout_queue, print])
-
         if client_args.reverse:
             # direction down
-
-            control_receiver_stdout_queue = multiprocessing.Queue()
 
             control_receiver_process = multiprocessing.Process(
                 name = "controlreceiver",
                 target = control_receiver_thread.run_recv_term_send,
-                args = (client_args, control_receiver_stdout_queue, control_conn, shared_run_mode, shared_udp_sending_rate_pps),
+                args = (client_args, control_conn, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
-
-            data_sender_stdout_queue = multiprocessing.Queue()
 
             data_sender_process = multiprocessing.Process(
                 name = "datasender",
                 target = data_sender_thread.run,
-                args = (client_args, data_sender_stdout_queue, data_sock, None, shared_run_mode, shared_udp_sending_rate_pps),
+                args = (client_args, data_sock, None, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
             # wait for start message
@@ -149,36 +140,14 @@ def server_mainline(args):
             thread_list.append(control_receiver_process)
             thread_list.append(data_sender_process)
 
-            queue_list = []
-            queue_list.append([control_receiver_stdout_queue, print])
-            queue_list.append([data_sender_stdout_queue, print])
-
-        # both up and down
-
         while True:
-            queue_was_processed = False
-
-            for queue_to_read, function_to_call in queue_list:
-                try:
-                    s1 = queue_to_read.get_nowait()
-                    queue_was_processed = True
-                    function_to_call(s1)
-                except queue.Empty:
-                    pass
-
-            if queue_was_processed:
-                # immediately loop again
-                continue
-
             if util.threads_are_running(thread_list):
-                # nothing in queues, but test is still running
                 time.sleep(0.01)
                 continue
-
-            # nothing in queues, and test has ended
-            break
+            else:
+                break
 
         util.done_with_socket(data_sock)
         control_conn.close()
 
-        print("client ended")
+        print("client ended", flush=True)

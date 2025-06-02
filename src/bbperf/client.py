@@ -22,7 +22,7 @@ from .tcp_control_connection_class import TcpControlConnectionClass
 
 def client_mainline(args):
     if args.verbosity:
-        print("args: {}".format(args))
+        print("args: {}".format(args), flush=True)
 
     server_ip = args.client
     server_port = args.port
@@ -32,7 +32,7 @@ def client_mainline(args):
     # create control connection
 
     if args.verbosity:
-        print("creating control connection")
+        print("creating control connection", flush=True)
 
     control_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     control_sock.connect((server_ip, server_port))
@@ -44,20 +44,20 @@ def client_mainline(args):
 
     if args.verbosity:
 
-        print("created control connection")
+        print("created control connection", flush=True)
 
     if args.verbosity:
-        print("sending args to server {}".format(vars(args)))
+        print("sending args to server {}".format(vars(args)), flush=True)
 
     control_conn.send_args_to_server(args)
 
     if args.verbosity:
-        print("sent args to server")
+        print("sent args to server", flush=True)
 
     # create data connection
 
     if args.verbosity:
-        print("creating data connection")
+        print("creating data connection", flush=True)
 
     if args.udp:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -76,36 +76,32 @@ def client_mainline(args):
     server_addr = (server_ip, server_port)
 
     if args.verbosity:
-        print("created data connection ({})".format("udp" if args.udp else "tcp"))
+        print("created data connection ({})".format("udp" if args.udp else "tcp"), flush=True)
 
     shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
     shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
+    control_receiver_results_queue = multiprocessing.Queue()
 
     # run test
 
     if args.verbosity:
-        print("test running")
+        print("test running", flush=True)
 
     if not args.reverse:
         # up direction
 
-        control_receiver_stdout_queue = multiprocessing.Queue()
-        control_receiver_results_queue = multiprocessing.Queue()
-
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_term_queue,
-            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue, shared_run_mode, shared_udp_sending_rate_pps),
+            args = (args, control_conn, control_receiver_results_queue, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         control_receiver_process.start()
 
-        data_sender_stdout_queue = multiprocessing.Queue()
-
         data_sender_process = multiprocessing.Process(
             name = "datasender",
             target = data_sender_thread.run,
-            args = (args, data_sender_stdout_queue, data_sock, server_addr, shared_run_mode, shared_udp_sending_rate_pps),
+            args = (args, data_sock, server_addr, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         # test starts here
@@ -115,22 +111,15 @@ def client_mainline(args):
         thread_list.append(control_receiver_process)
         thread_list.append(data_sender_process)
 
-        queue_list = []
-        queue_list.append([control_receiver_results_queue, output.print_output])
-        queue_list.append([control_receiver_stdout_queue, print])
-        queue_list.append([data_sender_stdout_queue, print])
-
     if args.reverse:
         # down direction
 
         # udp pinger
         if args.udp:
-            data_udp_ping_sender_stdout_queue = multiprocessing.Queue()
-
             data_udp_ping_sender_process = multiprocessing.Process(
                 name = "dataudppingsender",
                 target = data_udp_ping_sender_thread.run,
-                args = (args, data_udp_ping_sender_stdout_queue, data_sock, server_addr),
+                args = (args, data_sock, server_addr),
                 daemon = True)
 
             data_udp_ping_sender_process.start()
@@ -138,23 +127,18 @@ def client_mainline(args):
             # yield to let the first ping fly
             time.sleep(0.005)
 
-        data_receiver_stdout_queue = multiprocessing.Queue()
-
         data_receiver_process = multiprocessing.Process(
             name = "datareceiver",
             target = data_receiver_thread.run,
-            args = (args, data_receiver_stdout_queue, control_conn, data_sock, server_addr),
+            args = (args, control_conn, data_sock, server_addr),
             daemon = True)
 
         data_receiver_process.start()
 
-        control_receiver_stdout_queue = multiprocessing.Queue()
-        control_receiver_results_queue = multiprocessing.Queue()
-
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_queue,
-            args = (args, control_receiver_stdout_queue, control_conn, control_receiver_results_queue),
+            args = (args, control_conn, control_receiver_results_queue),
             daemon = True)
 
         control_receiver_process.start()
@@ -169,40 +153,26 @@ def client_mainline(args):
         if args.udp:
             thread_list.append(data_udp_ping_sender_process)
 
-        queue_list = []
-        if args.udp:
-            queue_list.append([data_udp_ping_sender_stdout_queue, print])
-        queue_list.append([data_receiver_stdout_queue, print])
-        queue_list.append([control_receiver_stdout_queue, print])
-        queue_list.append([control_receiver_results_queue, output.print_output])
-
-
     # output loop
 
     output.init(args)
 
     while True:
-        queue_was_processed = False
+        try:
+            s1 = control_receiver_results_queue.get_nowait()
+        except queue.Empty:
+            s1 = None
 
-        for queue_to_read, function_to_call in queue_list:
-            try:
-                s1 = queue_to_read.get_nowait()
-                queue_was_processed = True
-                function_to_call(s1)
-            except queue.Empty:
-                pass
-
-        if queue_was_processed:
-            # immediately loop again
+        if s1:
+            output.print_output(s1)
             continue
 
         if util.threads_are_running(thread_list):
             # nothing in queues, but test is still running
             time.sleep(0.01)
             continue
-
-        # exit program
-        break
+        else:
+            break
 
     output.term()
 
@@ -214,10 +184,10 @@ def client_mainline(args):
 
     if args.graph and not args.quiet:
         graph.create_graph(args, graphdatafilename)
-        print("created graph: {}".format(graphdatafilename + ".png"))
+        print("created graph: {}".format(graphdatafilename + ".png"), flush=True)
 
     if args.keep and not args.quiet:
-        print("keeping graph data file: {}".format(graphdatafilename))
-        print("keeping raw data file: {}".format(rawdatafilename))
+        print("keeping graph data file: {}".format(graphdatafilename), flush=True)
+        print("keeping raw data file: {}".format(rawdatafilename), flush=True)
     else:
         output.delete_data_files()

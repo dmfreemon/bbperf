@@ -142,10 +142,11 @@ def parse_r_record(args, s1):
         r_record["total_dropped"] = r_record["r_sender_total_pkts_sent"] - r_record["r_receiver_total_pkts_received"]
 
         if r_record["total_dropped"] < 0:
-            print("ERROR: total dropped is less than zero: sent {} received {}".format(
+            print("WARNING: total dropped is less than zero: sent {} received {}".format(
                 r_record["r_sender_total_pkts_sent"],
                 r_record["r_receiver_total_pkts_received"]),
-                file=sys.stderr)
+                file=sys.stderr,
+                flush=True)
 
     else:
         r_record["sender_pps"] = -1

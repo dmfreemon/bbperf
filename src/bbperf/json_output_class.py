@@ -40,7 +40,8 @@ class JsonOutputClass:
         num_samples = len(loaded_rtt_ms_list)
         if num_samples < 10:
             print("ERROR: not enough valid samples for summary statistics: {} samples.  Increase the duration of the run using the '-t' option.".format(num_samples),
-                  file=sys.stderr)
+                  file=sys.stderr,
+                  flush=True)
             return
 
         summary_dict = self.output_dict["summary"] = {}
@@ -85,7 +86,7 @@ class JsonOutputClass:
         # write to stdout
         if (self.args.quiet < 2) and ("summary" in self.output_dict):
             str_out = json.dumps(self.output_dict["summary"], indent=4)
-            print(str_out)
+            print(str_out, flush=True)
 
         # write to file if requested
         if self.args.json_file:

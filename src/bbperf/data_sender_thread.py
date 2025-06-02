@@ -10,9 +10,9 @@ from . import const
 
 
 # falling off the end of this method terminates the process
-def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps):
+def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
-        stdout_queue.put("data sender: start of process")
+        print("data sender: start of process", flush=True)
 
     peer_addr_for_udp = peer_addr
 
@@ -26,7 +26,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
                 if bytes_read.decode() == const.UDP_PING_MSG:
                     peer_addr_for_udp = pkt_from_addr
                     if args.verbosity:
-                        stdout_queue.put("data sender: peer address: {}".format(peer_addr_for_udp))
+                        print("data sender: peer address: {}".format(peer_addr_for_udp), flush=True)
                     break
 
     # udp autorate
@@ -37,7 +37,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
     # start sending
 
     if args.verbosity:
-        stdout_queue.put("data sender: sending")
+        print("data sender: sending", flush=True)
 
     curr_time_sec = time.time()
 
@@ -61,7 +61,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
         if (shared_run_mode.value == const.RUN_MODE_CALIBRATING):
             if curr_time_sec > (calibration_start_time + const.MAX_DURATION_CALIBRATION_TIME_SEC):
                 error_msg = "FATAL: data_sender_thread: time in calibration exceeded max allowed"
-                stdout_queue.put(error_msg)
+                print(error_msg, flush=True)
                 raise Exception(error_msg)
 
             is_calibrated = False
@@ -109,17 +109,17 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
 
             if num_bytes_sent <= 0:
                 msg = "ERROR: send failed"
-                stdout_queue.put(msg)
+                print(msg, flush=True)
                 raise Exception(msg)
 
         except ConnectionResetError:
-            stdout_queue.put("Connection reset by peer")
+            print("Connection reset by peer", flush=True)
             # exit process
             break
 
         except BrokenPipeError:
             # this can happen at the end of a tcp reverse test
-            stdout_queue.put("broken pipe error")
+            print("broken pipe error", flush=True)
             # exit process
             break
 
@@ -132,7 +132,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
             # we did not send
             # the timeout value here is 20 seconds, so that is end of days -- kill everything
             error_msg = "FATAL: data_sender_thread: socket timeout"
-            stdout_queue.put(error_msg)
+            print(error_msg, flush=True)
             raise Exception(error_msg)
 
         total_send_counter += 1
@@ -146,7 +146,8 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
 
             if args.verbosity > 2:
                 print("data_sender: a {} {} {} {} {} {} b".format(
-                    record_type, curr_time_sec, interval_time_sec, interval_send_count, interval_bytes_sent, total_send_counter)
+                    record_type, curr_time_sec, interval_time_sec, interval_send_count, interval_bytes_sent, total_send_counter),
+                    flush=True
                 )
 
             interval_start_time = curr_time_sec
@@ -185,7 +186,7 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
     # send STOP message
     if args.udp:
         if args.verbosity:
-            stdout_queue.put("data sender: sending udp stop message")
+            print("data sender: sending udp stop message", flush=True)
         payload_bytes = const.UDP_STOP_MSG.encode()
         # 3 times just in case the first one does not make it to the destination
         data_sock.sendto(payload_bytes, peer_addr_for_udp)
@@ -197,4 +198,4 @@ def run(args, stdout_queue, data_sock, peer_addr, shared_run_mode, shared_udp_se
     util.done_with_socket(data_sock)
 
     if args.verbosity:
-        stdout_queue.put("data sender: end of process")
+        print("data sender: end of process", flush=True)

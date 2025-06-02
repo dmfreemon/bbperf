@@ -46,7 +46,7 @@ class TcpControlConnectionClass:
             ))
 
         if self.args and self.args.verbosity > 1:
-            print("control connection: send: {}".format(payload_bytes.decode()))
+            print("control connection: send: {}".format(payload_bytes.decode()), flush=True)
 
 
     def send_validation_string(self):
@@ -60,7 +60,7 @@ class TcpControlConnectionClass:
 
     def send_start_message_to_server(self):
         if self.args.verbosity:
-            print("sending start message")
+            print("sending start message", flush=True)
 
         self.send(const.START_MSG.encode())
 
@@ -74,7 +74,7 @@ class TcpControlConnectionClass:
             raise PeerDisconnectedException()
 
         if self.args and self.args.verbosity > 2:
-            print("control connection: recv: {}".format(recv_bytes.decode()))
+            print("control connection: recv: {}".format(recv_bytes.decode()), flush=True)
 
         return recv_bytes
 
@@ -145,7 +145,7 @@ class TcpControlConnectionClass:
 
     def wait_for_start_message(self):
         if self.args.verbosity:
-            print("waiting for start message")
+            print("waiting for start message", flush=True)
 
         len_str = len(const.START_MSG)
 
@@ -161,7 +161,7 @@ class TcpControlConnectionClass:
             raise Exception("ERROR: failed to receive start message")
 
         if self.args.verbosity:
-            print("received start message")
+            print("received start message", flush=True)
 
 
     def recv_a_c_block(self):

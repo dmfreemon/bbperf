@@ -11,9 +11,9 @@ from . import const
 # we send some traffic so the server can figure it out.
 
 # falling off the end of this method terminates the process
-def run(args, stdout_queue, data_sock, peer_addr):
+def run(args, data_sock, peer_addr):
     if args.verbosity:
-        stdout_queue.put("data udp ping sender: start of process")
+        print("data udp ping sender: start of process", flush=True)
 
     peer_addr_for_udp = peer_addr
 
@@ -32,7 +32,7 @@ def run(args, stdout_queue, data_sock, peer_addr):
             send_count += 1
 
         except Exception as e:
-            stdout_queue.put("ERROR: data udp ping sender: exception: {}".format(e))
+            print("ERROR: data udp ping sender: exception: {}".format(e), flush=True)
             # exit process
             break
 
@@ -42,4 +42,4 @@ def run(args, stdout_queue, data_sock, peer_addr):
             break
 
     if args.verbosity:
-        stdout_queue.put("data udp ping sender: end of process")
+        print("data udp ping sender: end of process", flush=True)

@@ -61,8 +61,8 @@ def term():
 
 def delete_data_files():
     if args.verbosity:
-        print("deleting graph data file: {}".format(tmpfile1.name))
-        print("deleting raw data file: {}".format(tmpfile2.name))
+        print("deleting graph data file: {}".format(tmpfile1.name), flush=True)
+        print("deleting raw data file: {}".format(tmpfile2.name), flush=True)
 
     os.remove(tmpfile1.name)
     os.remove(tmpfile2.name)
@@ -160,7 +160,7 @@ def print_output(s1):
         # each stdout line will be a 0.1s snapshot
         if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
             if print_header2:
-                print("  sent_time   recv_time  sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms  rtt_ms  BDP_bytes buffered_bytes  bloat   pkts_dropped  drop%")
+                print("  sent_time   recv_time  sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms  rtt_ms  BDP_bytes buffered_bytes  bloat   pkts_dropped  drop%", flush=True)
                 print_header2 = False
 
             if r_record["interval_dropped_percent"] < 0:
@@ -182,7 +182,8 @@ def print_output(s1):
                 bloat_factor,
                 r_record["interval_dropped"],
                 dropped_percent_str
-                ))
+                ),
+                flush=True)
 
             last_line_to_stdout_time = curr_time
 
@@ -194,14 +195,15 @@ def print_output(s1):
 
         if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
             if print_header1:
-                print("calibrating")
-                print("  sent_time   recv_time     rtt_ms")
+                print("calibrating", flush=True)
+                print("  sent_time   recv_time     rtt_ms", flush=True)
                 print_header1 = False
 
             print("{:11.6f} {:11.6f} {:11.6f}".format(
                 relative_pkt_sent_time_sec,
                 relative_pkt_received_time_sec,
                 unloaded_latency_rtt_ms
-                ))
+                ),
+                flush=True)
 
             last_line_to_stdout_time = curr_time

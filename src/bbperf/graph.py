@@ -20,10 +20,10 @@ def create_graph(args, datafile1):
     result = subprocess.run(["gnuplot", "-e", gnuplot_script], capture_output=True)
 
     if args.verbosity or (result.returncode != 0):
-        print("gnuplot -e {}".format(gnuplot_script))
-        print("returncode: {}".format(result.returncode))
-        print("stdout: {}".format(result.stdout))
-        print("stderr: {}".format(result.stderr))
+        print("gnuplot -e {}".format(gnuplot_script), flush=True)
+        print("returncode: {}".format(result.returncode), flush=True)
+        print("stdout: {}".format(result.stdout), flush=True)
+        print("stderr: {}".format(result.stderr), flush=True)
 
 
 if __name__ == '__main__':

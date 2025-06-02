@@ -8,10 +8,10 @@ from . import const
 from . import util
 
 # args are client args
-def run(args, stdout_queue, control_conn, data_sock, peer_addr):
+def run(args, control_conn, data_sock, peer_addr):
 
     if args.verbosity:
-        stdout_queue.put("starting data receiver process")
+        print("starting data receiver process", flush=True)
 
     # do not block on the below recv calls as we want to exit the process when
     # the "end of run" timer expires even if the flow of packets has stopped
@@ -47,7 +47,7 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
                         # first packet is received
                         peer_addr_for_udp = pkt_from_addr
                         if not args.quiet:
-                            print("peer address: {}".format(peer_addr_for_udp))
+                            print("peer address: {}".format(peer_addr_for_udp), flush=True)
                     else:
                         raise Exception("ERROR: datagram from wrong peer address")
 
@@ -63,7 +63,7 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
                 if num_bytes_read == 0:
                     # peer has disconnected
                     if args.verbosity:
-                        stdout_queue.put("peer disconnected (data socket)")
+                        print("peer disconnected (data socket)", flush=True)
                     # exit process
                     break
 
@@ -79,7 +79,7 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
 
         if args.udp and num_bytes_read == len(const.UDP_STOP_MSG) and (bytes_read.decode() == const.UDP_STOP_MSG):
             if args.verbosity:
-                stdout_queue.put("data receiver thread: received udp stop message, exiting")
+                print("data receiver thread: received udp stop message, exiting", flush=True)
             break
 
         if num_bytes_read == 0:
@@ -129,7 +129,7 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
                 control_conn.send(ba)
 
             except Exception:
-                stdout_queue.put("ERROR: send on control socket failed 2")
+                print("ERROR: send on control socket failed", flush=True)
                 # exit process
                 break
 
@@ -145,4 +145,4 @@ def run(args, stdout_queue, control_conn, data_sock, peer_addr):
     control_conn.close()
 
     if args.verbosity:
-        stdout_queue.put("exiting data receiver process")
+        print("exiting data receiver process", flush=True)
