@@ -8,7 +8,7 @@ from . import const
 from . import util
 
 # args are client args
-def run(args, control_conn, data_sock, peer_addr):
+def run(args, control_conn, data_sock):
 
     if args.verbosity:
         print("starting data receiver process", flush=True)
@@ -16,8 +16,6 @@ def run(args, control_conn, data_sock, peer_addr):
     # do not block on the below recv calls as we want to exit the process when
     # the "end of run" timer expires even if the flow of packets has stopped
     data_sock.settimeout(0.05)
-
-    peer_addr_for_udp = peer_addr
 
     total_recv_calls = 0
 
@@ -33,39 +31,21 @@ def run(args, control_conn, data_sock, peer_addr):
     # do until end of test duration
     # we will not get a connection close with udp
     while True:
+        num_bytes_read = 0
 
         try:
-            num_bytes_read = 0
-            if args.udp:
-                # recv with timeout
-                bytes_read, pkt_from_addr = data_sock.recvfrom(const.BUFSZ)
+            # works for both tcp and udp
+            # recv with timeout
+            bytes_read = data_sock.recv(const.BUFSZ)
 
-                # validate peer address
-                # all subsequent packets should come from the same addr as the first one
-                if pkt_from_addr != peer_addr_for_udp:
-                    if peer_addr_for_udp is None:
-                        # first packet is received
-                        peer_addr_for_udp = pkt_from_addr
-                        if not args.quiet:
-                            print("peer address: {}".format(peer_addr_for_udp), flush=True)
-                    else:
-                        raise Exception("ERROR: datagram from wrong peer address")
+            num_bytes_read = len(bytes_read)
 
-                num_bytes_read = len(bytes_read)
-
-            else:
-                # tcp
-                # recv with timeout
-                bytes_read = data_sock.recv(const.BUFSZ)
-
-                num_bytes_read = len(bytes_read)
-
-                if num_bytes_read == 0:
-                    # peer has disconnected
-                    if args.verbosity:
-                        print("peer disconnected (data socket)", flush=True)
-                    # exit process
-                    break
+            if num_bytes_read == 0:
+                # (tcp only) peer has disconnected
+                if args.verbosity:
+                    print("peer disconnected (data socket)", flush=True)
+                # exit process
+                break
 
             socket_timeout_timer_active = False
 

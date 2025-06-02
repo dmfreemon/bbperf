@@ -63,7 +63,7 @@ def run_recv_term_queue(args, control_conn, results_queue, shared_run_mode, shar
         results_queue.put(new_str)
 
         if args.verbosity > 1:
-            print("control receiver process: created: {}".format(new_str), flush=True)
+            print("control receiver process: {}".format(new_str), flush=True)
 
     control_conn.close()
 
@@ -125,7 +125,7 @@ def run_recv_term_send(args, control_conn, shared_run_mode, shared_udp_sending_r
         control_conn.send(new_str.encode())
 
         if args.verbosity > 1:
-            print("control receiver process: created: {}".format(new_str), flush=True)
+            print("control receiver process: {}".format(new_str), flush=True)
 
 
     control_conn.close()

@@ -56,43 +56,41 @@ class RunModeManagerClass:
 
             return
 
-        # RUNNING
-        if self.shared_run_mode.value == const.RUN_MODE_RUNNING:
+        # run mode is RUNNING or STOP
 
-            # have we reached max time for data run without getting any valid data samples?
-            if ((self.num_good_samples == 0) and (curr_time > (self.run_mode_running_start_time + const.MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA))):
-                self.shared_run_mode.value = const.RUN_MODE_STOP
-                return
+        # have we reached max time for data run without getting any valid data samples?
+        if ((self.num_good_samples == 0) and (curr_time > (self.run_mode_running_start_time + const.MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA))):
+            self.shared_run_mode.value = const.RUN_MODE_STOP
 
-            # check to see if we should stop RUNNING
+        # check to see if we should stop RUNNING
 
-            if self.args.udp:
-                dropped_this_interval = r_record["total_dropped"] - self.total_dropped_as_of_last_interval
-                if dropped_this_interval < 0:
-                    dropped_this_interval = 0
-                dropped_this_interval_percent = (dropped_this_interval * 100.0) / r_record["r_sender_interval_pkts_sent"]
-                # remember this for next loop:
-                self.total_dropped_as_of_last_interval = r_record["total_dropped"]
-            else:
-                dropped_this_interval = -1
-                dropped_this_interval_percent = -1
+        if self.args.udp:
+            dropped_this_interval = r_record["total_dropped"] - self.total_dropped_as_of_last_interval
+            if dropped_this_interval < 0:
+                dropped_this_interval = 0
+            dropped_this_interval_percent = (dropped_this_interval * 100.0) / r_record["r_sender_interval_pkts_sent"]
+            # remember this for next loop:
+            self.total_dropped_as_of_last_interval = r_record["total_dropped"]
+        else:
+            dropped_this_interval = -1
+            dropped_this_interval_percent = -1
 
-            r_record["interval_dropped"] = dropped_this_interval
-            r_record["interval_dropped_percent"] = dropped_this_interval_percent
+        r_record["interval_dropped"] = dropped_this_interval
+        r_record["interval_dropped_percent"] = dropped_this_interval_percent
 
-            # how many good samples do we have?
-            if self.data_sample_evaluator.is_sample_valid(
-                    self.run_mode_running_start_time,
-                    dropped_this_interval_percent,
-                    r_record["sender_interval_rate_mbps"],
-                    r_record["receiver_interval_rate_mbps"]):
+        # how many good samples do we have?
+        if self.data_sample_evaluator.is_sample_valid(
+                self.run_mode_running_start_time,
+                dropped_this_interval_percent,
+                r_record["sender_interval_rate_mbps"],
+                r_record["receiver_interval_rate_mbps"]):
 
-                r_record["is_sample_valid"] = 1
-                self.num_good_samples += 1
-            else:
-                r_record["is_sample_valid"] = 0
+            r_record["is_sample_valid"] = 1
+            self.num_good_samples += 1
+        else:
+            r_record["is_sample_valid"] = 0
 
-            # num samples is 10x because we collect every 0.1 seconds
-            if self.num_good_samples > (self.args.time * 10):
-                self.shared_run_mode.value = const.RUN_MODE_STOP
+        # num samples is 10x because we collect every 0.1 seconds
+        if self.num_good_samples > (self.args.time * 10):
+            self.shared_run_mode.value = const.RUN_MODE_STOP
 

@@ -6,7 +6,6 @@ import socket
 import ipaddress
 
 from . import const
-from .exceptions import PeerDisconnectedException
 
 
 def validate_args(args):
@@ -64,29 +63,6 @@ def threads_are_running(thread_list):
                 raise Exception("FATAL: one of the subprocesses existed abnormally, name: {}, exitcode: {}".format(t.name, t.exitcode))
 
     return any_running
-
-
-def recv_exact_num_bytes_tcp(client_sock, total_num_bytes_to_read):
-    payload_bytes = bytearray()
-    num_bytes_read = 0
-
-    while num_bytes_read < total_num_bytes_to_read:
-
-        num_bytes_remaining = total_num_bytes_to_read - num_bytes_read
-
-        # blocking
-        recv_bytes = client_sock.recv(num_bytes_remaining)
-
-        num_bytes_received = len(recv_bytes)
-
-        if num_bytes_received == 0:
-            raise PeerDisconnectedException()
-
-        num_bytes_read += num_bytes_received
-
-        payload_bytes.extend(recv_bytes)
-
-    return payload_bytes
 
 
 def parse_r_record(args, s1):

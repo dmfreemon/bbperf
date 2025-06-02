@@ -10,24 +10,9 @@ from . import const
 
 
 # falling off the end of this method terminates the process
-def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps):
+def run(args, data_sock, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
         print("data sender: start of process", flush=True)
-
-    peer_addr_for_udp = peer_addr
-
-    # this (data sender) is running on server (aka reverse flow)
-    # for udp, we have to wait for a ping message so we know where to send the data packets
-    if args.udp and (peer_addr_for_udp is None):
-        while True:
-            # blocking
-            bytes_read, pkt_from_addr = data_sock.recvfrom(const.BUFSZ)
-            if len(bytes_read) == len(const.UDP_PING_MSG):
-                if bytes_read.decode() == const.UDP_PING_MSG:
-                    peer_addr_for_udp = pkt_from_addr
-                    if args.verbosity:
-                        print("data sender: peer address: {}".format(peer_addr_for_udp), flush=True)
-                    break
 
     # udp autorate
     if args.udp:
@@ -101,16 +86,11 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             # we use select to take advantage of tcp_notsent_lowat
             _, _, _ = select.select( [], [data_sock], [])
 
-            if args.udp:
-                num_bytes_sent = data_sock.sendto(ba, peer_addr_for_udp)
-            else:
-                # tcp
-                num_bytes_sent = data_sock.send(ba)
+            # this works for both tcp and udp
+            num_bytes_sent = data_sock.send(ba)
 
-            if num_bytes_sent <= 0:
-                msg = "ERROR: send failed"
-                print(msg, flush=True)
-                raise Exception(msg)
+            if num_bytes_sent <= 0 or num_bytes_sent != len(ba):
+                raise Exception("ERROR: data_sender_thread.run(): send failed")
 
         except ConnectionResetError:
             print("Connection reset by peer", flush=True)
@@ -189,11 +169,19 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             print("data sender: sending udp stop message", flush=True)
         payload_bytes = const.UDP_STOP_MSG.encode()
         # 3 times just in case the first one does not make it to the destination
-        data_sock.sendto(payload_bytes, peer_addr_for_udp)
+        data_sock.send(payload_bytes)
         time.sleep(0.1)
-        data_sock.sendto(payload_bytes, peer_addr_for_udp)
+        try:
+            data_sock.send(payload_bytes)
+        except:
+            # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
+            pass
         time.sleep(0.1)
-        data_sock.sendto(payload_bytes, peer_addr_for_udp)
+        try:
+            data_sock.send(payload_bytes)
+        except:
+            # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
+            pass
 
     util.done_with_socket(data_sock)
 

@@ -7,15 +7,12 @@ import socket
 
 from . import const
 from . import util
-from .exceptions import PeerDisconnectedException
+from . import tcp_helper
 
-
+# this needs to be serializable to get from driver to child thread
 class TcpControlConnectionClass:
 
     # class variables
-
-    validation_str = "c" + const.SOFT_SECRET + " "
-
 
     def __init__(self, control_sock):
         self.control_sock = control_sock
@@ -32,52 +29,15 @@ class TcpControlConnectionClass:
     def set_args(self, args):
         self.args = args
 
-
     def send(self, payload_bytes):
+        tcp_helper.send(self.args, self.control_sock, payload_bytes)
 
-        num_bytes_sent = self.control_sock.send(payload_bytes)
-
-        num_payload_bytes = len(payload_bytes)
-
-        if num_bytes_sent != num_payload_bytes:
-            raise Exception("ERROR: send failed: wrong number of bytes sent: expected {}, actual {}".format(
-                num_payload_bytes,
-                num_bytes_sent
-            ))
-
-        if self.args and self.args.verbosity > 1:
-            print("control connection: send: {}".format(payload_bytes.decode()), flush=True)
-
-
-    def send_validation_string(self):
-        self.send(self.validation_str.encode())
-
-
-    def send_args_to_server(self, args):
-        args_json = json.dumps(vars(args))
-        self.send(args_json.encode())
-
-
-    def send_start_message_to_server(self):
-        if self.args.verbosity:
-            print("sending start message", flush=True)
-
-        self.send(const.START_MSG.encode())
-
+    def send_string(self, str0):
+        tcp_helper.send(self.args, self.control_sock, str0.encode())
 
     def recv(self, num_bytes_to_read):
-
-        # blocking
-        recv_bytes = self.control_sock.recv(num_bytes_to_read)
-
-        if len(recv_bytes) == 0:
-            raise PeerDisconnectedException()
-
-        if self.args and self.args.verbosity > 2:
-            print("control connection: recv: {}".format(recv_bytes.decode()), flush=True)
-
+        recv_bytes = tcp_helper.recv(self.args, self.control_sock, num_bytes_to_read)
         return recv_bytes
-
 
     def recv_into_buffer_until_minimum_size(self, minimum_buffer_size):
 
@@ -110,8 +70,9 @@ class TcpControlConnectionClass:
         return substr_idx
 
 
-    def recv_and_check_validation_string(self):
-        len_str = len(self.validation_str)
+    def recv_initial_string(self):
+        # "control " + uuid of 36 characters
+        len_str = 8 + 36
 
         self.recv_into_buffer_until_minimum_size(len_str)
 
@@ -120,8 +81,9 @@ class TcpControlConnectionClass:
 
         received_str = received_bytes.decode()
 
-        if received_str != self.validation_str:
-            raise Exception("ERROR: client connection invalid, ident: {} payload {}".format(self.validation_str[0], received_str))
+        uuid = received_str[8:]
+
+        return uuid
 
 
     def receive_args_from_client(self):
