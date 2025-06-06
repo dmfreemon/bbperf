@@ -1,4 +1,6 @@
 
+import socket
+
 from .exceptions import PeerDisconnectedException
 
 
@@ -56,4 +58,21 @@ def recv_exact_num_bytes(tcp_sock, total_num_bytes_to_read):
         payload_bytes.extend(recv_bytes)
 
     return payload_bytes
+
+def get_congestion_control(data_sock):
+    cc_algo_bytes = data_sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_CONGESTION, 1024)
+    # cc_algo is null-terminated bytes
+    cc_algo_str = cc_algo_bytes.split(b'\x00')[0].decode()
+    return cc_algo_str
+
+def set_congestion_control(data_sock):
+    if get_congestion_control(data_sock) == "cubic":
+        # already set, nothing to do here
+        return
+
+    data_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_CONGESTION, "cubic".encode())
+
+    cc_algo_str = get_congestion_control(data_sock)
+    if cc_algo_str != "cubic":
+        raise Exception("ERROR: unexpected congestion control in effect: {}".format(cc_algo_str))
 

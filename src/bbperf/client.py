@@ -82,6 +82,7 @@ def client_mainline(args):
 
     else:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_helper.set_congestion_control(data_sock)
         data_sock.connect((server_ip, server_port))
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
         tcp_helper.send_string(args, data_sock, data_initial_string)

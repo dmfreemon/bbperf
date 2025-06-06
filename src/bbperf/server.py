@@ -94,7 +94,7 @@ def server_mainline(args):
             # blocking
             data_sock, _ = listen_sock.accept()
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
-
+            tcp_helper.set_congestion_control(data_sock)
             client_addr = data_sock.getpeername()
 
             # read initial string
