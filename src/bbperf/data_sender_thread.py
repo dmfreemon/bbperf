@@ -10,7 +10,7 @@ from . import const
 
 
 # falling off the end of this method terminates the process
-def run(args, data_sock, shared_run_mode, shared_udp_sending_rate_pps):
+def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
         print("data sender: start of process", flush=True)
 
@@ -86,8 +86,11 @@ def run(args, data_sock, shared_run_mode, shared_udp_sending_rate_pps):
             # we use select to take advantage of tcp_notsent_lowat
             _, _, _ = select.select( [], [data_sock], [])
 
-            # this works for both tcp and udp
-            num_bytes_sent = data_sock.send(ba)
+            if args.udp:
+                num_bytes_sent = data_sock.sendto(ba, peer_addr)
+            else:
+                # tcp
+                num_bytes_sent = data_sock.send(ba)
 
             if num_bytes_sent <= 0 or num_bytes_sent != len(ba):
                 raise Exception("ERROR: data_sender_thread.run(): send failed")
@@ -169,16 +172,16 @@ def run(args, data_sock, shared_run_mode, shared_udp_sending_rate_pps):
             print("data sender: sending udp stop message", flush=True)
         payload_bytes = const.UDP_STOP_MSG.encode()
         # 3 times just in case the first one does not make it to the destination
-        data_sock.send(payload_bytes)
+        data_sock.sendto(payload_bytes, peer_addr)
         time.sleep(0.1)
         try:
-            data_sock.send(payload_bytes)
+            data_sock.sendto(payload_bytes, peer_addr)
         except:
             # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
             pass
         time.sleep(0.1)
         try:
-            data_sock.send(payload_bytes)
+            data_sock.sendto(payload_bytes, peer_addr)
         except:
             # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
             pass

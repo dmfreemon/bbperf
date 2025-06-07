@@ -8,7 +8,7 @@ from . import const
 from . import util
 
 # args are client args
-def run(args, control_conn, data_sock):
+def run(args, control_conn, data_sock, peer_addr):
 
     if args.verbosity:
         print("starting data receiver process", flush=True)
@@ -34,9 +34,21 @@ def run(args, control_conn, data_sock):
         num_bytes_read = 0
 
         try:
-            # works for both tcp and udp
-            # recv with timeout
-            bytes_read = data_sock.recv(const.BUFSZ)
+            if args.udp:
+                # recv with timeout
+                bytes_read, pkt_from_addr = data_sock.recvfrom(const.BUFSZ)
+
+                # validate peer address
+                # only accept packets from our client
+
+                if pkt_from_addr != peer_addr:
+                    # ignore!
+                    continue
+
+            else:
+                # tcp
+                # recv with timeout
+                bytes_read = data_sock.recv(const.BUFSZ)
 
             num_bytes_read = len(bytes_read)
 

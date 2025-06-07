@@ -84,8 +84,6 @@ def server_mainline(args):
                 raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
                     run_id, data_connection_run_id))
 
-            data_sock.connect(client_addr)
-
         else:
             # data connection is tcp
             if client_args.verbosity:
@@ -108,7 +106,7 @@ def server_mainline(args):
                 raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
                     run_id, data_connection_run_id))
 
-        print("created data connection", flush=True)
+        print("created data connection, client address is {}".format(client_addr), flush=True)
 
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
         shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
@@ -119,7 +117,7 @@ def server_mainline(args):
             data_receiver_process = multiprocessing.Process(
                 name = "datareceiver",
                 target = data_receiver_thread.run,
-                args = (client_args, control_conn, data_sock),
+                args = (client_args, control_conn, data_sock, client_addr),
                 daemon = True)
 
             data_receiver_process.start()
@@ -143,7 +141,7 @@ def server_mainline(args):
             data_sender_process = multiprocessing.Process(
                 name = "datasender",
                 target = data_sender_thread.run,
-                args = (client_args, data_sock, shared_run_mode, shared_udp_sending_rate_pps),
+                args = (client_args, data_sock, client_addr, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
             # wait for start message

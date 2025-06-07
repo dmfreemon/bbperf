@@ -69,14 +69,13 @@ def client_mainline(args):
     if args.udp:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
-        data_sock.connect(server_addr)
 
         # start and keep sending the data connection initial string asynchronously
         shared_initial_string_done = multiprocessing.Value('i', 0)
         data_udp_ping_sender_process = multiprocessing.Process(
             name = "datainitialsender",
             target = udp_initial_string_sender_thread.run,
-            args = (args, data_sock, data_initial_string, shared_initial_string_done),
+            args = (args, data_sock, server_addr, data_initial_string, shared_initial_string_done),
             daemon = True)
         data_udp_ping_sender_process.start()
 
@@ -121,7 +120,7 @@ def client_mainline(args):
         data_sender_process = multiprocessing.Process(
             name = "datasender",
             target = data_sender_thread.run,
-            args = (args, data_sock, shared_run_mode, shared_udp_sending_rate_pps),
+            args = (args, data_sock, server_addr, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         # test starts here
@@ -137,7 +136,7 @@ def client_mainline(args):
         data_receiver_process = multiprocessing.Process(
             name = "datareceiver",
             target = data_receiver_thread.run,
-            args = (args, control_conn, data_sock),
+            args = (args, control_conn, data_sock, server_addr),
             daemon = True)
 
         data_receiver_process.start()
