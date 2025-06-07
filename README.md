@@ -62,26 +62,29 @@ Should `bbperf` not detect any valid data samples for 60 seconds after calibrati
 
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-u] [-R] [-t SECONDS] [-v] [-q] [-J JSON_FILE] [-g] [-k]
+usage: bbperf.py [-h] [-s] [-c SERVER_IP] [-p SERVER_PORT] [-u] [-R] [-t SECONDS] [-v] [-q] [-J JSON_FILE] [-g] [-k] [-B BIND_ADDR]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
 options:
   -h, --help            show this help message and exit
   -s, --server          run in server mode
-  -c, --client SERVER_IP
+  -c SERVER_IP, --client SERVER_IP
                         run in client mode
-  -p, --port SERVER_PORT
+  -p SERVER_PORT, --port SERVER_PORT
                         server port (default: 5301)
   -u, --udp             run in UDP mode (default: TCP mode)
   -R, --reverse         data flow in download direction (server to client)
-  -t, --time SECONDS    duration in seconds to collect valid data samples (dafault: 20)
+  -t SECONDS, --time SECONDS
+                        duration in seconds to collect valid data samples (dafault: 20)
   -v, --verbosity       increase output verbosity (can be repeated)
   -q, --quiet           decrease output verbosity (can be repeated)
-  -J, --json-file JSON_FILE
+  -J JSON_FILE, --json-file JSON_FILE
                         JSON output file
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
+  -B BIND_ADDR, --bind BIND_ADDR
+                        bind server sockets to address
 ```
 
 Output from `bbperf` includes the following information:

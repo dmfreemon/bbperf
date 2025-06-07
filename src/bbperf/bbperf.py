@@ -70,6 +70,11 @@ def mainline():
         default=False,
         help="keep data file")
 
+    parser.add_argument("-B", "--bind",
+        metavar="BIND_ADDR",
+        default="0.0.0.0",
+        help="bind server sockets to address")
+
     args = parser.parse_args()
 
     util.validate_args(args)

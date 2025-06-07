@@ -18,13 +18,12 @@ from .tcp_control_connection_class import TcpControlConnectionClass
 
 
 def server_mainline(args):
-    server_port = args.port
-
     listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    listen_sock.bind(('0.0.0.0', server_port))
+    print("binding tcp control socket to address {} port {}".format(args.bind, args.port), flush=True)
+    listen_sock.bind((args.bind, args.port))
 
     listen_sock.listen(32)          # listen backlog
     listen_sock.setblocking(True)
@@ -32,7 +31,7 @@ def server_mainline(args):
     server_port = listen_sock.getsockname()[1]
 
     while True:
-        print("server listening on port ", server_port, flush=True)
+        print("server listening on port {}".format(server_port), flush=True)
 
         # accept control connection
 
@@ -70,7 +69,10 @@ def server_mainline(args):
             # unconnected socket to catch just the first packet
             # we need to do it this way so we can figure out the client addr for our connected socket
             data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            data_sock.bind(("0.0.0.0", server_port))
+
+            print("binding udp data socket to address {} port {}".format(args.bind, args.port), flush=True)
+            data_sock.bind((args.bind, args.port))
+
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
 
             # read initial string
