@@ -41,17 +41,22 @@ def server_mainline(args):
         control_conn = TcpControlConnectionClass(control_sock)
         control_conn.set_args(args)
 
-        print("client connected (control socket)", flush=True)
+        control_client_addr = control_sock.getpeername()
+
+        print("client connected (control socket): client addr: {}".format(control_client_addr), flush=True)
+
+        print("waiting to receive control initial string from client", flush=True)
 
         # blocking
         run_id = control_conn.recv_initial_string()
+
+        print("received control initial string: run_id: {}".format(run_id), flush=True)
 
         print("waiting for args from client", flush=True)
 
         # blocking
         client_args = control_conn.receive_args_from_client()
 
-        print("received run_id: {}".format(run_id), flush=True)
         print("received args from client: {}".format(vars(client_args)), flush=True)
 
         control_conn.set_args(client_args)
@@ -75,10 +80,19 @@ def server_mainline(args):
 
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
 
+            if client_args.verbosity:
+                print("created data connection (udp)", flush=True)
+
+            if client_args.verbosity:
+                print("waiting to receive data initial string", flush=True)
+
             # read initial string
             # blocking
             payload_bytes, client_addr = data_sock.recvfrom(len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
+
+            if client_args.verbosity:
+                print("received data initial string: client addr: {} string: {}".format(client_addr, payload_str), flush=True)
 
             # check run_id
             data_connection_run_id = payload_str[5:]
@@ -89,7 +103,7 @@ def server_mainline(args):
         else:
             # data connection is tcp
             if client_args.verbosity:
-                print("creating data connection (tcp)", flush=True)
+                print("creating data connection (tcp), waiting for accept", flush=True)
 
             # blocking
             data_sock, _ = listen_sock.accept()
@@ -97,16 +111,28 @@ def server_mainline(args):
             tcp_helper.set_congestion_control(data_sock)
             client_addr = data_sock.getpeername()
 
+            if client_args.verbosity:
+                print("accepted data connection (tcp), client addr {}".format(client_addr), flush=True)
+
+            if client_args.verbosity:
+                print("waiting to receive data initial string", flush=True)
+
             # read initial string
             # blocking
             payload_bytes = tcp_helper.recv_exact_num_bytes(data_sock, len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
+
+            if client_args.verbosity:
+                print("received data initial string: {}".format(payload_str), flush=True)
 
             # check run_id
             data_connection_run_id = payload_str[5:]
             if data_connection_run_id != run_id:
                 raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
                     run_id, data_connection_run_id))
+
+        if client_args.verbosity:
+            print("run_id is valid", flush=True)
 
         print("created data connection, client address is {}".format(client_addr), flush=True)
 
@@ -127,12 +153,24 @@ def server_mainline(args):
             thread_list = []
             thread_list.append(data_receiver_process)
 
-            tcp_helper.send_setup_complete_message(control_conn)
+            if client_args.verbosity:
+                print("sending setup complete message to client", flush=True)
+
+            control_conn.send_string(const.SETUP_COMPLETE_MSG)
+
+            if client_args.verbosity:
+                print("sent setup complete message to client", flush=True)
 
         if client_args.reverse:
             # direction down
 
-            tcp_helper.send_setup_complete_message(control_conn)
+            if client_args.verbosity:
+                print("sending setup complete message to client", flush=True)
+
+            control_conn.send_string(const.SETUP_COMPLETE_MSG)
+
+            if client_args.verbosity:
+                print("sent setup complete message to client", flush=True)
 
             control_receiver_process = multiprocessing.Process(
                 name = "controlreceiver",
@@ -146,8 +184,14 @@ def server_mainline(args):
                 args = (client_args, data_sock, client_addr, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
+            if client_args.verbosity:
+                print("waiting for start message from client", flush=True)
+
             # wait for start message
             control_conn.wait_for_start_message()
+
+            if client_args.verbosity:
+                print("received start message from client", flush=True)
 
             control_receiver_process.start()
 
@@ -169,6 +213,9 @@ def server_mainline(args):
                 continue
             else:
                 break
+
+        if client_args.verbosity:
+            print("test finished, cleaning up", flush=True)
 
         util.done_with_socket(data_sock)
         util.done_with_socket(control_sock)

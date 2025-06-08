@@ -106,9 +106,6 @@ class TcpControlConnectionClass:
 
 
     def wait_for_start_message(self):
-        if self.args.verbosity:
-            print("waiting for start message", flush=True)
-
         len_str = len(const.START_MSG)
 
         # blocking
@@ -121,9 +118,6 @@ class TcpControlConnectionClass:
 
         if received_str != const.START_MSG:
             raise Exception("ERROR: failed to receive start message")
-
-        if self.args.verbosity:
-            print("received start message", flush=True)
 
 
     def recv_a_c_block(self):

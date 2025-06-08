@@ -34,7 +34,7 @@ def client_mainline(args):
     # create control connection
 
     if args.verbosity:
-        print("creating control connection", flush=True)
+        print("creating control connection to server at {}".format(server_addr), flush=True)
 
     control_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     control_sock.connect(server_addr)
@@ -42,16 +42,23 @@ def client_mainline(args):
     control_conn = TcpControlConnectionClass(control_sock)
     control_conn.set_args(args)
 
-    # generate a random UUID (36 character string)
-    run_id = str(uuid.uuid4())
-    control_initial_string = "control " + run_id
-    control_conn.send_string(control_initial_string)
-
     if args.verbosity:
         print("created control connection", flush=True)
 
+    # generate a random UUID (36 character string)
+    run_id = str(uuid.uuid4())
+    control_initial_string = "control " + run_id
+
     if args.verbosity:
-        print("sending args to server {}".format(vars(args)), flush=True)
+        print("sending control initial string: {}".format(control_initial_string), flush=True)
+
+    control_conn.send_string(control_initial_string)
+
+    if args.verbosity:
+        print("sent control initial string", flush=True)
+
+    if args.verbosity:
+        print("sending args to server: {}".format(vars(args)), flush=True)
 
     args_json = json.dumps(vars(args))
     control_conn.send_string(args_json)
@@ -62,14 +69,18 @@ def client_mainline(args):
     # create data connection
 
     if args.verbosity:
-        print("creating data connection", flush=True)
+        print("creating data connection to server at {}".format(server_addr), flush=True)
 
     data_initial_string = "data " + run_id
 
     if args.udp:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
+        if args.verbosity:
+            print("created udp data connection", flush=True)
 
+        if args.verbosity:
+            print("sending data initial string (async udp): {}".format(data_initial_string), flush=True)
         # start and keep sending the data connection initial string asynchronously
         shared_initial_string_done = multiprocessing.Value('i', 0)
         data_udp_ping_sender_process = multiprocessing.Process(
@@ -82,13 +93,19 @@ def client_mainline(args):
     else:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_helper.set_congestion_control(data_sock)
-        data_sock.connect((server_ip, server_port))
+        data_sock.connect(server_addr)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
+        if args.verbosity:
+            print("created tcp data connection", flush=True)
+
+        if args.verbosity:
+            print("sending data initial string (tcp): {}".format(data_initial_string), flush=True)
         tcp_helper.send_string(args, data_sock, data_initial_string)
+        if args.verbosity:
+            print("sent data initial string (tcp)", flush=True)
 
     if args.verbosity:
-        print("created data connection", flush=True)
-
+        print("waiting for connection setup complete message from server", flush=True)
     # wait for connection setup complete message
     len_of_setup_complete_message = len(const.SETUP_COMPLETE_MSG)
     payload_bytes = tcp_helper.recv_exact_num_bytes(control_sock, len_of_setup_complete_message)
@@ -100,7 +117,7 @@ def client_mainline(args):
         shared_initial_string_done.value = 1
 
     if args.verbosity:
-        print("connection setup complete: message received", flush=True)
+        print("connection setup complete message received from server", flush=True)
 
     shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
     shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
@@ -152,9 +169,12 @@ def client_mainline(args):
         # test starts here
 
         if args.verbosity:
-            print("sending start message", flush=True)
+            print("sending start message to server", flush=True)
 
         control_conn.send_string(const.START_MSG)
+
+        if args.verbosity:
+            print("sent start message to server", flush=True)
 
         thread_list = []
         thread_list.append(data_receiver_process)
@@ -188,6 +208,9 @@ def client_mainline(args):
         else:
             break
 
+    if args.verbosity:
+        print("test finished, generating output", flush=True)
+
     output.term()
 
     util.done_with_socket(data_sock)
@@ -205,3 +228,6 @@ def client_mainline(args):
         print("keeping raw data file: {}".format(rawdatafilename), flush=True)
     else:
         output.delete_data_files()
+
+    if args.verbosity:
+        print("test complete, exiting")
