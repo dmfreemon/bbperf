@@ -81,6 +81,8 @@ def client_mainline(args):
     if args.udp:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
+        # must send something just to bind a local addr
+        data_sock.sendto("foo".encode(), ("127.0.0.1", 65535))
         client_data_addr = data_sock.getsockname()
         if args.verbosity:
             print("created udp data connection, client {}, no server addr".format(client_data_addr), flush=True)
