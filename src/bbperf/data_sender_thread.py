@@ -44,7 +44,8 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         curr_time_sec = time.time()
 
         if (shared_run_mode.value == const.RUN_MODE_CALIBRATING):
-            if curr_time_sec > (calibration_start_time + const.MAX_DURATION_CALIBRATION_TIME_SEC):
+            # double the limit to avoid a race condition with the run mode manager
+            if curr_time_sec > (calibration_start_time + (2 * const.MAX_DURATION_CALIBRATION_TIME_SEC)):
                 error_msg = "FATAL: data_sender_thread: time in calibration exceeded max allowed"
                 print(error_msg, flush=True)
                 raise Exception(error_msg)
