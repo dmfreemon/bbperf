@@ -12,12 +12,14 @@ from .run_mode_manager_class import RunModeManagerClass
 # direction up, runs on client
 # args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_queue(args, control_conn, results_queue, shared_run_mode, shared_udp_sending_rate_pps):
+def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
         print("starting control receiver process: run_recv_term_queue", flush=True)
 
     run_mode_manager = RunModeManagerClass(args, shared_run_mode)
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
+
+    readyevent.set()
 
     while True:
 
@@ -74,12 +76,14 @@ def run_recv_term_queue(args, control_conn, results_queue, shared_run_mode, shar
 # direction down, runs on server
 # args are client args (not server args)
 # falling off the end of this method terminates the process
-def run_recv_term_send(args, control_conn, shared_run_mode, shared_udp_sending_rate_pps):
+def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_udp_sending_rate_pps):
     if args.verbosity:
         print("starting control receiver process: run_recv_term_send", flush=True)
 
     run_mode_manager = RunModeManagerClass(args, shared_run_mode)
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
+
+    readyevent.set()
 
     while True:
 
@@ -137,9 +141,11 @@ def run_recv_term_send(args, control_conn, shared_run_mode, shared_udp_sending_r
 # direction down, runs on client (passthru)
 # args are client args (not server args) -- this always runs on client
 # falling off the end of this method terminates the process
-def run_recv_queue(args, control_conn, results_queue):
+def run_recv_queue(readyevent, args, control_conn, results_queue):
     if args.verbosity:
         print("starting control receiver process: run_recv_queue", flush=True)
+
+    readyevent.set()
 
     while True:
         try:

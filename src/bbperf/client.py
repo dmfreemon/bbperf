@@ -89,14 +89,18 @@ def client_mainline(args):
 
         if args.verbosity:
             print("sending data initial string (async udp): {}".format(data_initial_string), flush=True)
+
         # start and keep sending the data connection initial string asynchronously
         shared_initial_string_done = multiprocessing.Value('i', 0)
+        readyevent = multiprocessing.Event()
         data_udp_ping_sender_process = multiprocessing.Process(
             name = "datainitialsender",
             target = udp_initial_string_sender_thread.run,
-            args = (args, data_sock, server_addr, data_initial_string, shared_initial_string_done),
+            args = (readyevent, args, data_sock, server_addr, data_initial_string, shared_initial_string_done),
             daemon = True)
         data_udp_ping_sender_process.start()
+        if not readyevent.wait(timeout=60):
+            raise Exception("ERROR: process failed to become ready")
 
     else:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -136,13 +140,17 @@ def client_mainline(args):
     if not args.reverse:
         # up direction
 
+        readyevent = multiprocessing.Event()
+
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_term_queue,
-            args = (args, control_conn, control_receiver_results_queue, shared_run_mode, shared_udp_sending_rate_pps),
+            args = (readyevent, args, control_conn, control_receiver_results_queue, shared_run_mode, shared_udp_sending_rate_pps),
             daemon = True)
 
         control_receiver_process.start()
+        if not readyevent.wait(timeout=60):
+            raise Exception("ERROR: process failed to become ready")
 
         data_sender_process = multiprocessing.Process(
             name = "datasender",
@@ -160,21 +168,29 @@ def client_mainline(args):
     if args.reverse:
         # down direction
 
+        readyevent = multiprocessing.Event()
+
         data_receiver_process = multiprocessing.Process(
             name = "datareceiver",
             target = data_receiver_thread.run,
-            args = (args, control_conn, data_sock, server_addr),
+            args = (readyevent, args, control_conn, data_sock, server_addr),
             daemon = True)
 
         data_receiver_process.start()
+        if not readyevent.wait(timeout=60):
+            raise Exception("ERROR: process failed to become ready")
+
+        readyevent = multiprocessing.Event()
 
         control_receiver_process = multiprocessing.Process(
             name = "controlreceiver",
             target = control_receiver_thread.run_recv_queue,
-            args = (args, control_conn, control_receiver_results_queue),
+            args = (readyevent, args, control_conn, control_receiver_results_queue),
             daemon = True)
 
         control_receiver_process.start()
+        if not readyevent.wait(timeout=60):
+            raise Exception("ERROR: process failed to become ready")
 
         # test starts here
 

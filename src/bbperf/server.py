@@ -143,13 +143,17 @@ def server_mainline(args):
         if not client_args.reverse:
             # direction up
 
+            readyevent = multiprocessing.Event()
+
             data_receiver_process = multiprocessing.Process(
                 name = "datareceiver",
                 target = data_receiver_thread.run,
-                args = (client_args, control_conn, data_sock, client_data_addr),
+                args = (readyevent, client_args, control_conn, data_sock, client_data_addr),
                 daemon = True)
 
             data_receiver_process.start()
+            if not readyevent.wait(timeout=60):
+                raise Exception("ERROR: process failed to become ready")
 
             thread_list = []
             thread_list.append(data_receiver_process)
@@ -173,10 +177,12 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("sent setup complete message to client", flush=True)
 
+            readyevent = multiprocessing.Event()
+
             control_receiver_process = multiprocessing.Process(
                 name = "controlreceiver",
                 target = control_receiver_thread.run_recv_term_send,
-                args = (client_args, control_conn, shared_run_mode, shared_udp_sending_rate_pps),
+                args = (readyevent, client_args, control_conn, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
             data_sender_process = multiprocessing.Process(
@@ -195,6 +201,8 @@ def server_mainline(args):
                 print("received start message from client", flush=True)
 
             control_receiver_process.start()
+            if not readyevent.wait(timeout=60):
+                raise Exception("ERROR: process failed to become ready")
 
             data_sender_process.start()
 

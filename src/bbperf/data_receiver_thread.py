@@ -8,7 +8,7 @@ from . import const
 from . import util
 
 # args are client args
-def run(args, control_conn, data_sock, peer_addr):
+def run(readyevent, args, control_conn, data_sock, peer_addr):
 
     if args.verbosity:
         print("starting data receiver process", flush=True)
@@ -27,6 +27,8 @@ def run(args, control_conn, data_sock, peer_addr):
 
     socket_timeout_timer_active = False
     socket_timeout_timer_start_time = None
+
+    readyevent.set()
 
     # do until end of test duration
     # we will not get a connection close with udp

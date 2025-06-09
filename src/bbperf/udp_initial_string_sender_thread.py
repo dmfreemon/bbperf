@@ -7,7 +7,7 @@ from . import udp_helper
 
 
 # falling off the end of this method terminates the process
-def run(args, data_sock, peer_addr, data_initial_string, shared_initial_string_done):
+def run(readyevent, args, data_sock, peer_addr, data_initial_string, shared_initial_string_done):
     if args.verbosity:
         print("udp initial string sender thread: start of process", flush=True)
 
@@ -16,6 +16,8 @@ def run(args, data_sock, peer_addr, data_initial_string, shared_initial_string_d
     total_pings_to_send = ping_duration_sec / ping_interval_sec
 
     send_count = 0
+
+    readyevent.set()
 
     while True:
         if shared_initial_string_done.value == 1:
