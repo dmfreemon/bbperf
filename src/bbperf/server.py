@@ -22,8 +22,10 @@ def server_mainline(args):
 
     listen_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    print("binding tcp control socket to address {} port {}".format(args.bind, args.port), flush=True)
-    listen_sock.bind((args.bind, args.port))
+    server_addr = (args.bind, args.port)
+
+    print("binding tcp control socket to local address {}".format(server_addr), flush=True)
+    listen_sock.bind(server_addr)
 
     listen_sock.listen(32)          # listen backlog
     listen_sock.setblocking(True)
@@ -41,9 +43,12 @@ def server_mainline(args):
         control_conn = TcpControlConnectionClass(control_sock)
         control_conn.set_args(args)
 
-        control_client_addr = control_sock.getpeername()
+        curr_client_start_time = time.time()
 
-        print("client connected (control socket): client addr: {}".format(control_client_addr), flush=True)
+        client_control_addr = control_sock.getpeername()
+
+        print("client connected (control socket): client addr {}, server addr {}".format(
+            client_control_addr, server_addr), flush=True)
 
         print("waiting to receive control initial string from client", flush=True)
 
@@ -69,30 +74,28 @@ def server_mainline(args):
         if client_args.udp:
             # data connection is udp
             if client_args.verbosity:
-                print("creating data connection (udp)", flush=True)
+                print("creating udp data connection", flush=True)
 
             # unconnected socket to catch just the first packet
             # we need to do it this way so we can figure out the client addr for our connected socket
             data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-            print("binding udp data socket to address {} port {}".format(args.bind, args.port), flush=True)
-            data_sock.bind((args.bind, args.port))
-
+            print("binding udp data socket to local address {}".format(server_addr), flush=True)
+            data_sock.bind(server_addr)
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
-
             if client_args.verbosity:
-                print("created data connection (udp)", flush=True)
+                print("created udp data connection, no client addr, server addr {}".format(server_addr), flush=True)
 
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
 
             # read initial string
             # blocking
-            payload_bytes, client_addr = data_sock.recvfrom(len_data_connection_initial_string)
+            payload_bytes, client_data_addr = data_sock.recvfrom(len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
 
             if client_args.verbosity:
-                print("received data initial string: client addr: {} string: {}".format(client_addr, payload_str), flush=True)
+                print("received data initial string: client data addr: {} string: {}".format(client_data_addr, payload_str), flush=True)
 
             # check run_id
             data_connection_run_id = payload_str[5:]
@@ -109,10 +112,10 @@ def server_mainline(args):
             data_sock, _ = listen_sock.accept()
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
             tcp_helper.set_congestion_control(data_sock)
-            client_addr = data_sock.getpeername()
-
+            client_data_addr = data_sock.getpeername()
             if client_args.verbosity:
-                print("accepted data connection (tcp), client addr {}".format(client_addr), flush=True)
+                print("accepted tcp data connection, client {}, server {}".format(
+                    client_data_addr, server_addr), flush=True)
 
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
@@ -134,8 +137,6 @@ def server_mainline(args):
         if client_args.verbosity:
             print("run_id is valid", flush=True)
 
-        print("created data connection, client address is {}".format(client_addr), flush=True)
-
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
         shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
 
@@ -145,7 +146,7 @@ def server_mainline(args):
             data_receiver_process = multiprocessing.Process(
                 name = "datareceiver",
                 target = data_receiver_thread.run,
-                args = (client_args, control_conn, data_sock, client_addr),
+                args = (client_args, control_conn, data_sock, client_data_addr),
                 daemon = True)
 
             data_receiver_process.start()
@@ -181,7 +182,7 @@ def server_mainline(args):
             data_sender_process = multiprocessing.Process(
                 name = "datasender",
                 target = data_sender_thread.run,
-                args = (client_args, data_sock, client_addr, shared_run_mode, shared_udp_sending_rate_pps),
+                args = (client_args, data_sock, client_data_addr, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
             if client_args.verbosity:
@@ -201,10 +202,13 @@ def server_mainline(args):
             thread_list.append(control_receiver_process)
             thread_list.append(data_sender_process)
 
-        print("test running, {} {} from client {}".format(
+        print("test running, {} {}, control conn addr {}, data conn addr {}, server addr {}, elapsed startup time {} seconds".format(
               "udp" if client_args.udp else "tcp",
               "down" if client_args.reverse else "up",
-              client_addr),
+              client_control_addr,
+              client_data_addr,
+              server_addr,
+              (time.time() - curr_client_start_time)),
               flush=True)
 
         while True:

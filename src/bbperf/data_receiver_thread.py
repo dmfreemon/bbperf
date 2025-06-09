@@ -35,19 +35,19 @@ def run(args, control_conn, data_sock, peer_addr):
 
         try:
             if args.udp:
-                # recv with timeout
+                # recv with short timeout
                 bytes_read, pkt_from_addr = data_sock.recvfrom(const.BUFSZ)
 
                 # validate peer address
                 # only accept packets from our client
 
                 if pkt_from_addr != peer_addr:
-                    # ignore!
+                    # ignore this datagram
                     continue
 
             else:
                 # tcp
-                # recv with timeout
+                # recv with short timeout
                 bytes_read = data_sock.recv(const.BUFSZ)
 
             num_bytes_read = len(bytes_read)

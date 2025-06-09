@@ -24,6 +24,8 @@ from .tcp_control_connection_class import TcpControlConnectionClass
 
 
 def client_mainline(args):
+    client_start_time = time.time()
+
     if args.verbosity:
         print("args: {}".format(args), flush=True)
 
@@ -42,8 +44,11 @@ def client_mainline(args):
     control_conn = TcpControlConnectionClass(control_sock)
     control_conn.set_args(args)
 
+    client_control_addr = control_sock.getsockname()
+
     if args.verbosity:
-        print("created control connection", flush=True)
+        print("created control connection, client {}, server {}".format(
+              client_control_addr, server_addr), flush=True)
 
     # generate a random UUID (36 character string)
     run_id = str(uuid.uuid4())
@@ -76,8 +81,9 @@ def client_mainline(args):
     if args.udp:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
+        client_data_addr = data_sock.getsockname()
         if args.verbosity:
-            print("created udp data connection", flush=True)
+            print("created udp data connection, client {}, no server addr".format(client_data_addr), flush=True)
 
         if args.verbosity:
             print("sending data initial string (async udp): {}".format(data_initial_string), flush=True)
@@ -95,8 +101,10 @@ def client_mainline(args):
         tcp_helper.set_congestion_control(data_sock)
         data_sock.connect(server_addr)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
+        client_data_addr = data_sock.getsockname()
         if args.verbosity:
-            print("created tcp data connection", flush=True)
+            print("created tcp data connection, client {}, server {}".format(
+                client_data_addr, server_addr), flush=True)
 
         if args.verbosity:
             print("sending data initial string (tcp): {}".format(data_initial_string), flush=True)
@@ -181,10 +189,13 @@ def client_mainline(args):
         thread_list.append(control_receiver_process)
 
     if args.verbosity:
-        print("test running, {} {} to server {}".format(
+        print("test running, {} {}, control conn addr {}, data conn addr {}, server addr {}, elapsed startup time {} seconds".format(
               "udp" if args.udp else "tcp",
               "down" if args.reverse else "up",
-              server_addr),
+              client_control_addr,
+              client_data_addr,
+              server_addr,
+              (time.time() - client_start_time)),
               flush=True)
 
     # output loop
