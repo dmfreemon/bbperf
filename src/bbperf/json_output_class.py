@@ -50,32 +50,42 @@ class JsonOutputClass:
 
         summary_dict["unloaded_rtt_ms"] = self.unloaded_rtt_ms
 
-        p50, p90, p99 = numpy.percentile(loaded_rtt_ms_list, [50, 90, 99])
+        p1, p10, p50, p90, p99 = numpy.percentile(loaded_rtt_ms_list, [1, 10, 50, 90, 99])
         summary_dict["loaded_rtt_ms"] = {}
+        summary_dict["loaded_rtt_ms"]["p1"]  = p1
+        summary_dict["loaded_rtt_ms"]["p10"] = p10
         summary_dict["loaded_rtt_ms"]["p50"] = p50
         summary_dict["loaded_rtt_ms"]["p90"] = p90
         summary_dict["loaded_rtt_ms"]["p99"] = p99
 
-        p50, p90, p99 = numpy.percentile(receiver_throughput_rate_mbps_list, [50, 90, 99])
+        p1, p10, p50, p90, p99 = numpy.percentile(receiver_throughput_rate_mbps_list, [1, 10, 50, 90, 99])
         summary_dict["receiver_throughput_rate_mbps"] = {}
+        summary_dict["receiver_throughput_rate_mbps"]["p1"]  = p1
+        summary_dict["receiver_throughput_rate_mbps"]["p10"] = p10
         summary_dict["receiver_throughput_rate_mbps"]["p50"] = p50
         summary_dict["receiver_throughput_rate_mbps"]["p90"] = p90
         summary_dict["receiver_throughput_rate_mbps"]["p99"] = p99
 
-        p50, p90, p99 = numpy.percentile(excess_buffered_bytes_list, [50, 90, 99])
+        p1, p10, p50, p90, p99 = numpy.percentile(excess_buffered_bytes_list, [1, 10, 50, 90, 99])
         summary_dict["excess_buffered_bytes"] = {}
+        summary_dict["excess_buffered_bytes"]["p1"]  = p1
+        summary_dict["excess_buffered_bytes"]["p10"] = p10
         summary_dict["excess_buffered_bytes"]["p50"] = p50
         summary_dict["excess_buffered_bytes"]["p90"] = p90
         summary_dict["excess_buffered_bytes"]["p99"] = p99
 
-        p50, p90, p99 = numpy.percentile(receiver_pps_list, [50, 90, 99])
+        p1, p10, p50, p90, p99 = numpy.percentile(receiver_pps_list, [1, 10, 50, 90, 99])
         summary_dict["receiver_pps"] = {}
+        summary_dict["receiver_pps"]["p1"]  = p1
+        summary_dict["receiver_pps"]["p10"] = p10
         summary_dict["receiver_pps"]["p50"] = p50
         summary_dict["receiver_pps"]["p90"] = p90
         summary_dict["receiver_pps"]["p99"] = p99
 
-        p50, p90, p99 = numpy.percentile(pkt_loss_percent_list, [50, 90, 99])
+        p1, p10, p50, p90, p99 = numpy.percentile(pkt_loss_percent_list, [1, 10, 50, 90, 99])
         summary_dict["pkt_loss_percent"] = {}
+        summary_dict["pkt_loss_percent"]["p1"]  = p1
+        summary_dict["pkt_loss_percent"]["p10"] = p10
         summary_dict["pkt_loss_percent"]["p50"] = p50
         summary_dict["pkt_loss_percent"]["p90"] = p90
         summary_dict["pkt_loss_percent"]["p99"] = p99
