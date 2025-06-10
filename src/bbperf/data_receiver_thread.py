@@ -13,9 +13,11 @@ def run(readyevent, args, control_conn, data_sock, peer_addr):
     if args.verbosity:
         print("starting data receiver process", flush=True)
 
-    # do not block on the below recv calls as we want to exit the process when
-    # the "end of run" timer expires even if the flow of packets has stopped
-    data_sock.settimeout(0.05)
+    # do not block for very long on the below recv calls as we want to do these thing even
+    # if the flow of data packets has stopped:
+    # 1. to send our interval stats on the intervals
+    # 2. to exit the process when the "end of run" timer expires
+    data_sock.settimeout(0.01)
 
     total_recv_calls = 0
 
