@@ -30,7 +30,7 @@ class UdpRateManagerClass:
         if len(self.receiver_pps_list) > 10:
             self.receiver_pps_list = self.receiver_pps_list[1:]
 
-        receiver_pps_p90 = numpy.percentile(self.receiver_pps_list, [90])
+        receiver_pps_p90 = numpy.percentile(self.receiver_pps_list, 90)
 
         new_rate = receiver_pps_p90 * 1.2
 

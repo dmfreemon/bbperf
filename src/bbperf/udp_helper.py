@@ -9,5 +9,4 @@ def sendto(args, udp_sock, peer_addr, payload_bytes):
         raise Exception("ERROR: udp_helper.sendto(): send failed")
 
     if args.verbosity > 2:
-        print("udp_helper.sendto(): data sent: {}".format(
-            payload_bytes.decode()), flush=True)
+        print("udp sendto: {} {}".format(peer_addr, payload_bytes.decode()), flush=True)

@@ -128,7 +128,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             interval_send_count = accum_send_count
             interval_bytes_sent = accum_bytes_sent
 
-            if args.verbosity > 2:
+            if args.verbosity > 1:
                 print("data_sender: a {} {} {} {} {} {} b".format(
                     record_type, curr_time_sec, interval_time_sec, interval_send_count, interval_bytes_sent, total_send_counter),
                     flush=True

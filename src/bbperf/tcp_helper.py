@@ -34,7 +34,7 @@ def recv(args, tcp_sock, num_bytes_to_read):
         raise PeerDisconnectedException()
 
     if args and args.verbosity > 2:
-        print("tcp_helper.recv(): {}".format(recv_bytes.decode()), flush=True)
+        print("tcp recv: {}".format(recv_bytes.decode()), flush=True)
 
     return recv_bytes
 
