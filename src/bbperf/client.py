@@ -105,6 +105,7 @@ def client_mainline(args):
     else:
         data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_helper.set_congestion_control(data_sock)
+        tcp_helper.set_tcp_notsent_lowat(data_sock)
         data_sock.connect(server_addr)
         data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
         client_data_addr = data_sock.getsockname()

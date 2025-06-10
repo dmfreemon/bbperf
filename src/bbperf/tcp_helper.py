@@ -78,3 +78,5 @@ def set_congestion_control(data_sock):
     if cc_algo_str != "cubic":
         raise Exception("ERROR: unexpected congestion control in effect: {}".format(cc_algo_str))
 
+def set_tcp_notsent_lowat(data_sock):
+    data_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NOTSENT_LOWAT, 131072)

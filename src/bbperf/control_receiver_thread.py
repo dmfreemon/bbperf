@@ -169,6 +169,9 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
         # passthru as is
         results_queue.put(received_str)
 
+        if args.verbosity > 1:
+            print("control receiver process: {}".format(received_str), flush=True)
+
     control_conn.close()
 
     if args.verbosity:
