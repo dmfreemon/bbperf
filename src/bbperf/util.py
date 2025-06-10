@@ -3,7 +3,6 @@
 
 import sys
 import socket
-import ipaddress
 
 from . import const
 
@@ -11,11 +10,6 @@ from . import const
 def validate_args(args):
     if args.server and args.client:
         raise Exception("ERROR: cannot be both client and server")
-
-    if args.client:
-        # this is server IP address
-        # allow any exception here to propogate up
-        ipaddress.ip_address(args.client)
 
     if args.port > 65535:
         raise Exception("ERROR: invalid server port {}".format(args.port))

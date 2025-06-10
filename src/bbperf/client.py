@@ -9,6 +9,7 @@ import queue
 import socket
 import uuid
 import json
+import ipaddress
 
 from . import data_sender_thread
 from . import udp_initial_string_sender_thread
@@ -29,7 +30,20 @@ def client_mainline(args):
     if args.verbosity:
         print("args: {}".format(args), flush=True)
 
-    server_ip = args.client
+    if args.client:
+        try:
+            # is the arg already an IP address?
+            ipaddress.ip_address(args.client)
+            server_ip = args.client
+
+        except ValueError:
+            # not an ip address, must be a hostname
+            try:
+                server_ip = socket.gethostbyname(args.client)
+
+            except socket.gaierror as e:
+                raise Exception("ERROR: unable to resolve hostname {}, {}".format(args.client, e))
+
     server_port = args.port
     server_addr = (server_ip, server_port)
 

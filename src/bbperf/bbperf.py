@@ -20,9 +20,9 @@ def mainline():
         help="run in server mode")
 
     parser.add_argument("-c", "--client",
-        metavar="SERVER_IP",
+        metavar="SERVER_ADDR",
         default=None,
-        help="run in client mode")
+        help="run in client mode (specify either DNS name or IP address)")
 
     parser.add_argument("-p", "--port",
         metavar="SERVER_PORT",
