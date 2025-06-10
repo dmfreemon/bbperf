@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Cloudflare, Inc.
+# Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
 import time
 
@@ -28,3 +30,24 @@ def send_stop_message(data_sock, peer_addr):
                 pass
 
             time.sleep(0.1)
+
+
+def wait_for_string(data_sock, peer_addr, expected_string):
+    expected_bytes = expected_string.encode()
+    start_time = time.time()
+
+    while True:
+        payload_bytes, pkt_from_addr = data_sock.recvfrom(len(expected_bytes))
+
+        if pkt_from_addr != peer_addr:
+            continue
+
+        payload_str = payload_bytes.decode()
+
+        if payload_str == expected_string:
+            break
+
+        elapsed_time = time.time() - start_time
+        if elapsed_time > 60:
+            raise Exception("ERROR: failed to UDP recv string: {}".format(expected_string))
+

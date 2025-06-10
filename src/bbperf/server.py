@@ -10,6 +10,7 @@ import multiprocessing
 from . import data_sender_thread
 from . import data_receiver_thread
 from . import control_receiver_thread
+from . import udp_string_sender_thread
 from . import util
 from . import const
 from . import tcp_helper
@@ -103,6 +104,24 @@ def server_mainline(args):
                 raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
                     run_id, data_connection_run_id))
 
+            if client_args.verbosity:
+                print("run_id is valid", flush=True)
+
+            if client_args.verbosity:
+                print("sending data initial ack (async udp)", flush=True)
+
+            # start and keep sending the data initial ack asynchronously
+            readyevent = multiprocessing.Event()
+            doneevent = multiprocessing.Event()
+            udp_data_initial_ack_sender_process = multiprocessing.Process(
+                name = "udpdatainitialacksender",
+                target = udp_string_sender_thread.run,
+                args = (readyevent, doneevent, client_args, data_sock, client_data_addr, const.UDP_DATA_INITIAL_ACK),
+                daemon = True)
+            udp_data_initial_ack_sender_process.start()
+            if not readyevent.wait(timeout=60):
+                raise Exception("ERROR: process failed to become ready")
+
         else:
             # data connection is tcp
             if client_args.verbosity:
@@ -135,37 +154,12 @@ def server_mainline(args):
                 raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
                     run_id, data_connection_run_id))
 
-        if client_args.verbosity:
-            print("run_id is valid", flush=True)
+            if client_args.verbosity:
+                print("run_id is valid", flush=True)
+
 
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
         shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
-
-        if not client_args.reverse:
-            # direction up
-
-            readyevent = multiprocessing.Event()
-
-            data_receiver_process = multiprocessing.Process(
-                name = "datareceiver",
-                target = data_receiver_thread.run,
-                args = (readyevent, client_args, control_conn, data_sock, client_data_addr),
-                daemon = True)
-
-            data_receiver_process.start()
-            if not readyevent.wait(timeout=60):
-                raise Exception("ERROR: process failed to become ready")
-
-            thread_list = []
-            thread_list.append(data_receiver_process)
-
-            if client_args.verbosity:
-                print("sending setup complete message to client", flush=True)
-
-            control_conn.send_string(const.SETUP_COMPLETE_MSG)
-
-            if client_args.verbosity:
-                print("sent setup complete message to client", flush=True)
 
         if client_args.reverse:
             # direction down
@@ -201,6 +195,12 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("received start message from client", flush=True)
 
+            if client_args.udp:
+                # stop sending UDP data init acks
+                if client_args.verbosity:
+                    print("stopping sending udp data initial acks to client", flush=True)
+                doneevent.set()
+
             control_receiver_process.start()
             if not readyevent.wait(timeout=60):
                 raise Exception("ERROR: process failed to become ready")
@@ -210,6 +210,33 @@ def server_mainline(args):
             thread_list = []
             thread_list.append(control_receiver_process)
             thread_list.append(data_sender_process)
+
+        else:
+            # direction up
+
+            readyevent = multiprocessing.Event()
+
+            data_receiver_process = multiprocessing.Process(
+                name = "datareceiver",
+                target = data_receiver_thread.run,
+                args = (readyevent, client_args, control_conn, data_sock, client_data_addr),
+                daemon = True)
+
+            data_receiver_process.start()
+            if not readyevent.wait(timeout=60):
+                raise Exception("ERROR: process failed to become ready")
+
+            thread_list = []
+            thread_list.append(data_receiver_process)
+
+            if client_args.verbosity:
+                print("sending setup complete message to client", flush=True)
+
+            control_conn.send_string(const.SETUP_COMPLETE_MSG)
+
+            if client_args.verbosity:
+                print("sent setup complete message to client", flush=True)
+
 
         print("test running, {} {}, control conn addr {}, data conn addr {}, server addr {}, elapsed startup time {} seconds".format(
               "udp" if client_args.udp else "tcp",

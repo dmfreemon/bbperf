@@ -11,6 +11,9 @@ def validate_args(args):
     if args.server and args.client:
         raise Exception("ERROR: cannot be both client and server")
 
+    if (not args.server) and (not args.client):
+        raise Exception("ERROR: must be either a client or a server")
+
     if args.port > 65535:
         raise Exception("ERROR: invalid server port {}".format(args.port))
 

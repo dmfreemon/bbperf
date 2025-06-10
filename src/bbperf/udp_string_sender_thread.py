@@ -7,9 +7,9 @@ from . import udp_helper
 
 
 # falling off the end of this method terminates the process
-def run(readyevent, args, data_sock, peer_addr, data_initial_string, shared_initial_string_done):
+def run(readyevent, doneevent, args, data_sock, peer_addr, string_to_send):
     if args.verbosity:
-        print("udp initial string sender thread: start of process", flush=True)
+        print("udp string sender thread: start of process", flush=True)
 
     ping_interval_sec = 0.2
     ping_duration_sec = 5
@@ -20,10 +20,10 @@ def run(readyevent, args, data_sock, peer_addr, data_initial_string, shared_init
     readyevent.set()
 
     while True:
-        if shared_initial_string_done.value == 1:
+        if doneevent.is_set():
             break
 
-        udp_helper.sendto(args, data_sock, peer_addr, data_initial_string.encode())
+        udp_helper.sendto(args, data_sock, peer_addr, string_to_send.encode())
         send_count += 1
 
         time.sleep(ping_interval_sec)
@@ -32,4 +32,4 @@ def run(readyevent, args, data_sock, peer_addr, data_initial_string, shared_init
             break
 
     if args.verbosity:
-        print("udp initial string sender thread: end of process", flush=True)
+        print("udp string sender thread: end of process", flush=True)
