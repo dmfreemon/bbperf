@@ -9,6 +9,8 @@ from . import const
 from . import util
 from . import tcp_helper
 
+from .exceptions import PeerDisconnectedException
+
 # this needs to be serializable to get from driver to child thread
 class TcpControlConnectionClass:
 
@@ -35,10 +37,6 @@ class TcpControlConnectionClass:
     def send_string(self, str0):
         tcp_helper.send(self.args, self.control_sock, str0.encode())
 
-    def recv(self, num_bytes_to_read):
-        recv_bytes = tcp_helper.recv(self.args, self.control_sock, num_bytes_to_read)
-        return recv_bytes
-
     def recv_into_buffer_until_minimum_size(self, minimum_buffer_size):
 
         while True:
@@ -48,9 +46,22 @@ class TcpControlConnectionClass:
             num_bytes_remaining = minimum_buffer_size - len(self.read_buffer)
 
             # blocking
-            recv_bytes = self.recv(num_bytes_remaining)
+            recv_bytes = tcp_helper.recv(self.args, self.control_sock, num_bytes_remaining)
+
+            if len(recv_bytes) == 0:
+                raise PeerDisconnectedException()
 
             self.read_buffer.extend(recv_bytes)
+
+
+    def recv_exact_num_bytes(self, exact_num_bytes_to_read):
+
+        self.recv_into_buffer_until_minimum_size(exact_num_bytes_to_read)
+
+        received_bytes = self.read_buffer[ 0 : exact_num_bytes_to_read ]
+        self.read_buffer = self.read_buffer[ exact_num_bytes_to_read : ]
+
+        return received_bytes
 
 
     def recv_into_buffer_until_substr_found(self, substr_bytes):
@@ -63,7 +74,7 @@ class TcpControlConnectionClass:
                 break
 
             # blocking
-            recv_bytes = self.recv(const.BUFSZ)
+            recv_bytes = tcp_helper.recv(self.args, self.control_sock, const.BUFSZ)
 
             self.read_buffer.extend(recv_bytes)
 

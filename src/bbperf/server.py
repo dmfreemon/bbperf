@@ -123,7 +123,7 @@ def server_mainline(args):
 
             # read initial string
             # blocking
-            payload_bytes = tcp_helper.recv_exact_num_bytes(data_sock, len_data_connection_initial_string)
+            payload_bytes = tcp_helper.recv_exact_num_bytes(client_args, data_sock, len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
 
             if client_args.verbosity:

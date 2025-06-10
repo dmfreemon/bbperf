@@ -25,10 +25,10 @@ def send_string(args, tcp_sock, str0):
     send(args, tcp_sock, str0.encode())
 
 
-def recv(args, tcp_sock, num_bytes_to_read):
+def recv(args, tcp_sock, max_bytes_to_read):
 
     # blocking
-    recv_bytes = tcp_sock.recv(num_bytes_to_read)
+    recv_bytes = tcp_sock.recv(max_bytes_to_read)
 
     if len(recv_bytes) == 0:
         raise PeerDisconnectedException()
@@ -39,7 +39,7 @@ def recv(args, tcp_sock, num_bytes_to_read):
     return recv_bytes
 
 
-def recv_exact_num_bytes(tcp_sock, total_num_bytes_to_read):
+def recv_exact_num_bytes(args, tcp_sock, total_num_bytes_to_read):
     payload_bytes = bytearray()
     num_bytes_read = 0
 
@@ -48,7 +48,7 @@ def recv_exact_num_bytes(tcp_sock, total_num_bytes_to_read):
         num_bytes_remaining = total_num_bytes_to_read - num_bytes_read
 
         # blocking
-        recv_bytes = tcp_sock.recv(num_bytes_remaining)
+        recv_bytes = recv(args, tcp_sock, num_bytes_remaining)
 
         num_bytes_received = len(recv_bytes)
 
@@ -60,6 +60,7 @@ def recv_exact_num_bytes(tcp_sock, total_num_bytes_to_read):
         payload_bytes.extend(recv_bytes)
 
     return payload_bytes
+
 
 def get_congestion_control(data_sock):
     cc_algo_bytes = data_sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_CONGESTION, 1024)

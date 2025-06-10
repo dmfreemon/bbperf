@@ -1,4 +1,8 @@
 
+import time
+
+from . import const
+
 
 def sendto(args, udp_sock, peer_addr, payload_bytes):
     num_payload_bytes = len(payload_bytes)
@@ -10,3 +14,17 @@ def sendto(args, udp_sock, peer_addr, payload_bytes):
 
     if args.verbosity > 2:
         print("udp sendto: {} {}".format(peer_addr, payload_bytes.decode()), flush=True)
+
+
+def send_stop_message(data_sock, peer_addr):
+        payload_bytes = const.UDP_STOP_MSG.encode()
+
+        # 3 times just in case the first one does not make it to the destination
+        for i in range(3):
+            try:
+                data_sock.sendto(payload_bytes, peer_addr)
+            except:
+                # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
+                pass
+
+            time.sleep(0.1)

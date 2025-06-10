@@ -7,6 +7,7 @@ import select
 
 from . import util
 from . import const
+from . import udp_helper
 
 
 # falling off the end of this method terminates the process
@@ -171,21 +172,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
     if args.udp:
         if args.verbosity:
             print("data sender: sending udp stop message", flush=True)
-        payload_bytes = const.UDP_STOP_MSG.encode()
-        # 3 times just in case the first one does not make it to the destination
-        data_sock.sendto(payload_bytes, peer_addr)
-        time.sleep(0.1)
-        try:
-            data_sock.sendto(payload_bytes, peer_addr)
-        except:
-            # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
-            pass
-        time.sleep(0.1)
-        try:
-            data_sock.sendto(payload_bytes, peer_addr)
-        except:
-            # probable "ConnectionRefusedError: [Errno 111] Connection refused" here if first message was processed successfully
-            pass
+        udp_helper.send_stop_message(data_sock, peer_addr)
 
     util.done_with_socket(data_sock)
 

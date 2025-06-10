@@ -121,9 +121,10 @@ def client_mainline(args):
 
     if args.verbosity:
         print("waiting for connection setup complete message from server", flush=True)
+
     # wait for connection setup complete message
     len_of_setup_complete_message = len(const.SETUP_COMPLETE_MSG)
-    payload_bytes = tcp_helper.recv_exact_num_bytes(control_sock, len_of_setup_complete_message)
+    payload_bytes = control_conn.recv_exact_num_bytes(len_of_setup_complete_message)
     payload_str = payload_bytes.decode()
     if payload_str != const.SETUP_COMPLETE_MSG:
         raise Exception("ERROR: client_mainline: setup complete message was not received")
