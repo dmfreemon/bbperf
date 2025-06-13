@@ -25,7 +25,9 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
     if args.verbosity:
         print("data sender: sending", flush=True)
 
-    curr_time_sec = time.time()
+    start_time_sec = time.time()
+    calibration_start_time = start_time_sec
+    curr_time_sec = start_time_sec
 
     interval_start_time = curr_time_sec
     interval_end_time = interval_start_time + const.SAMPLE_INTERVAL_SEC
@@ -38,8 +40,6 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
     accum_bytes_sent = 0
 
     total_send_counter = 1
-
-    calibration_start_time = time.time()
 
     while True:
         curr_time_sec = time.time()
@@ -156,6 +156,9 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         # normal end of test
         if shared_run_mode.value == const.RUN_MODE_STOP:
             break
+
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
         # pause between udp batches if necessary
         if args.udp:

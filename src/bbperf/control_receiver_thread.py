@@ -4,6 +4,7 @@
 import time
 
 from . import util
+from . import const
 
 from .exceptions import PeerDisconnectedException
 from .udp_rate_manager_class import UdpRateManagerClass
@@ -20,6 +21,8 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
 
     readyevent.set()
+
+    start_time_sec = time.time()
 
     while True:
 
@@ -39,7 +42,8 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
             # exit process
             break
 
-        curr_time_str = str(time.time())
+        curr_time_sec = time.time()
+        curr_time_str = str(curr_time_sec)
 
         received_str = bytes_read.decode()
 
@@ -67,6 +71,9 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
         if args.verbosity > 1:
             print("control receiver process: {}".format(new_str), flush=True)
 
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+
     control_conn.close()
 
     if args.verbosity:
@@ -84,6 +91,8 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
     udp_rate_manager = UdpRateManagerClass(args, shared_udp_sending_rate_pps)
 
     readyevent.set()
+
+    start_time_sec = time.time()
 
     while True:
 
@@ -103,7 +112,8 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
             # exit process
             break
 
-        curr_time_str = str(time.time())
+        curr_time_sec = time.time()
+        curr_time_str = str(curr_time_sec)
 
         received_str = bytes_read.decode()
 
@@ -131,6 +141,8 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
         if args.verbosity > 1:
             print("control receiver process: {}".format(new_str), flush=True)
 
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
     control_conn.close()
 
@@ -146,6 +158,8 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
         print("starting control receiver process: run_recv_queue", flush=True)
 
     readyevent.set()
+
+    start_time_sec = time.time()
 
     while True:
         try:
@@ -164,6 +178,8 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
             # exit process
             break
 
+        curr_time_sec = time.time()
+
         received_str = bytes_read.decode()
 
         # passthru as is
@@ -171,6 +187,9 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
 
         if args.verbosity > 1:
             print("control receiver process: {}".format(received_str), flush=True)
+
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
     control_conn.close()
 

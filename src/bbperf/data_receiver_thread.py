@@ -21,7 +21,9 @@ def run(readyevent, args, control_conn, data_sock, peer_addr):
 
     total_recv_calls = 0
 
-    interval_start_time = time.time()
+    start_time_sec = time.time()
+
+    interval_start_time = start_time_sec
     interval_end_time = interval_start_time + const.SAMPLE_INTERVAL_SEC
 
     interval_pkts_received = 0
@@ -134,6 +136,9 @@ def run(readyevent, args, control_conn, data_sock, peer_addr):
 
             interval_start_time = curr_time_sec
             interval_end_time = interval_start_time + const.SAMPLE_INTERVAL_SEC
+
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
 
     # peer disconnected (or an error)

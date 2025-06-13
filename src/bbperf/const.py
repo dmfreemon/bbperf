@@ -11,6 +11,9 @@ MAX_DURATION_CALIBRATION_TIME_SEC = 20
 # cap the amount of time we will wait for valid data
 MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA = 60
 
+# never run longer than this under any circumstances
+MAX_RUN_TIME_FAILSAFE_SEC = 300
+
 # ignore incoming data for this amount of time after starting data collection phase
 DATA_SAMPLE_IGNORE_TIME_SEC = 1
 

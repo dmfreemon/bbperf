@@ -247,12 +247,18 @@ def server_mainline(args):
               (time.time() - curr_client_start_time)),
               flush=True)
 
+        start_time_sec = time.time()
+
         while True:
             if util.threads_are_running(thread_list):
                 time.sleep(0.01)
-                continue
             else:
                 break
+
+            curr_time_sec = time.time()
+
+            if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+                raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
         if client_args.verbosity:
             print("test finished, cleaning up", flush=True)

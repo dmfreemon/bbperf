@@ -249,6 +249,8 @@ def client_mainline(args):
 
     output.init(args)
 
+    start_time_sec = time.time()
+
     while True:
         try:
             s1 = control_receiver_results_queue.get_nowait()
@@ -262,9 +264,13 @@ def client_mainline(args):
         if util.threads_are_running(thread_list):
             # nothing in queues, but test is still running
             time.sleep(0.01)
-            continue
         else:
             break
+
+        curr_time_sec = time.time()
+
+        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
+            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
 
     if args.verbosity:
         print("test finished, generating output", flush=True)
