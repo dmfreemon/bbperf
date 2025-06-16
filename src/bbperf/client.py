@@ -78,6 +78,17 @@ def client_mainline(args):
         print("sent control initial string", flush=True)
 
     if args.verbosity:
+        print("waiting for control initial ack", flush=True)
+
+    received_bytes = control_conn.recv_exact_num_bytes(len(const.TCP_CONTROL_INITIAL_ACK))
+    received_str = received_bytes.decode()
+    if received_str != const.TCP_CONTROL_INITIAL_ACK:
+        raise Exception("ERROR: received invalid control initial ack: {}".format(received_str))
+
+    if args.verbosity:
+        print("received control initial ack", flush=True)
+
+    if args.verbosity:
         print("sending args to server: {}".format(vars(args)), flush=True)
 
     args_json = json.dumps(vars(args))

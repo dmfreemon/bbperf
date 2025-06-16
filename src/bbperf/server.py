@@ -58,6 +58,12 @@ def server_mainline(args):
 
         print("received control initial string: run_id: {}".format(run_id), flush=True)
 
+        print("sending control initial ack", flush=True)
+
+        control_conn.send_string(const.TCP_CONTROL_INITIAL_ACK)
+
+        print("sent control initial ack", flush=True)
+
         print("waiting for args from client", flush=True)
 
         # blocking

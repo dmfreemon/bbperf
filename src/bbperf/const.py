@@ -36,6 +36,7 @@ RATE_LIMITED_BATCH_SIZE_PKTS_TCP_PKTS = 5
 SETUP_COMPLETE_MSG = "setup complete"
 START_MSG = " start "
 UDP_STOP_MSG = "stop"
+TCP_CONTROL_INITIAL_ACK = "control initial ack"
 UDP_DATA_INITIAL_ACK = "data initial ack"
 
 SOCKET_TIMEOUT_SEC=60
