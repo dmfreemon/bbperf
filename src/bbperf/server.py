@@ -73,6 +73,14 @@ def server_mainline(args):
 
         control_conn.set_args(client_args)
 
+        # send args ACK
+
+        print("sending control args ack", flush=True)
+
+        control_conn.send_string(const.TCP_CONTROL_ARGS_ACK)
+
+        print("sent control args ack", flush=True)
+
         # accept data connection
 
         # "data " + uuid of 36 characters
@@ -96,7 +104,6 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
 
-            # read initial string
             # blocking
             payload_bytes, client_data_addr = data_sock.recvfrom(len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
@@ -105,13 +112,7 @@ def server_mainline(args):
                 print("received data initial string: client data addr: {} string: {}".format(client_data_addr, payload_str), flush=True)
 
             # check run_id
-            data_connection_run_id = payload_str[5:]
-            if data_connection_run_id != run_id:
-                raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
-                    run_id, data_connection_run_id))
-
-            if client_args.verbosity:
-                print("run_id is valid", flush=True)
+            util.validate_data_connection(client_args, run_id, payload_str)
 
             if client_args.verbosity:
                 print("sending data initial ack (async udp)", flush=True)
@@ -146,7 +147,6 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
 
-            # read initial string
             # blocking
             payload_bytes = tcp_helper.recv_exact_num_bytes(client_args, data_sock, len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
@@ -155,13 +155,7 @@ def server_mainline(args):
                 print("received data initial string: {}".format(payload_str), flush=True)
 
             # check run_id
-            data_connection_run_id = payload_str[5:]
-            if data_connection_run_id != run_id:
-                raise Exception("ERROR: data connection invalid, control run_id {} data run_id {} ".format(
-                    run_id, data_connection_run_id))
-
-            if client_args.verbosity:
-                print("run_id is valid", flush=True)
+            util.validate_data_connection(client_args, run_id, payload_str)
 
 
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)

@@ -37,9 +37,10 @@ SETUP_COMPLETE_MSG = "setup complete"
 START_MSG = " start "
 UDP_STOP_MSG = "stop"
 TCP_CONTROL_INITIAL_ACK = "control initial ack"
+TCP_CONTROL_ARGS_ACK = "control args ack"
 UDP_DATA_INITIAL_ACK = "data initial ack"
 
-SOCKET_TIMEOUT_SEC=60
+SOCKET_TIMEOUT_SEC=30
 
 UDP_DEFAULT_INITIAL_RATE = 8000
 

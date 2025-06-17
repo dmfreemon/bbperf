@@ -97,6 +97,17 @@ def client_mainline(args):
     if args.verbosity:
         print("sent args to server", flush=True)
 
+    if args.verbosity:
+        print("waiting for control args ack", flush=True)
+
+    received_bytes = control_conn.recv_exact_num_bytes(len(const.TCP_CONTROL_ARGS_ACK))
+    received_str = received_bytes.decode()
+    if received_str != const.TCP_CONTROL_ARGS_ACK:
+        raise Exception("ERROR: received invalid control args ack: {}".format(received_str))
+
+    if args.verbosity:
+        print("received control args ack", flush=True)
+
     # create data connection
 
     if args.verbosity:

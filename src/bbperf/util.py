@@ -127,3 +127,20 @@ def parse_r_record(args, s1):
         r_record["total_dropped"] = -1
 
     return r_record
+
+
+def validate_data_connection(args, run_id, data_connection_initial_str):
+    w = data_connection_initial_str.split(" ")
+
+    if w[0] != "data":
+        raise Exception("ERROR: data connection invalid (does not start with data) run_id {} received {}".format(
+            run_id, data_connection_initial_str))
+
+    data_connection_run_id = w[1]
+
+    if data_connection_run_id != run_id:
+        raise Exception("ERROR: data connection invalid (run_id incorrect) control run_id {} data run_id {} received {}".format(
+            run_id, data_connection_run_id, data_connection_initial_str))
+
+    if args.verbosity:
+        print("data run_id is valid", flush=True)
