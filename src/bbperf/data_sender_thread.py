@@ -77,7 +77,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         if args.udp:
             ba.extend(const.PAYLOAD_1K)
         elif is_calibrated:
-            ba.extend(const.PAYLOAD_4K)
+            ba.extend(const.PAYLOAD_128K)
         else:
             ba.extend(const.PAYLOAD_1K)
 
@@ -94,7 +94,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
                 # tcp
                 num_bytes_sent = data_sock.send(ba)
 
-            if num_bytes_sent <= 0 or num_bytes_sent != len(ba):
+            if num_bytes_sent <= 0:
                 raise Exception("ERROR: data_sender_thread.run(): send failed")
 
         except ConnectionResetError:
