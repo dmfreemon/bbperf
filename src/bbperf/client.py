@@ -92,6 +92,7 @@ def client_mainline(args):
         print("sending args to server: {}".format(vars(args)), flush=True)
 
     args_json = json.dumps(vars(args))
+
     control_conn.send_string(args_json)
 
     if args.verbosity:
@@ -165,7 +166,7 @@ def client_mainline(args):
 
         if args.verbosity:
             print("sending data initial string (tcp): {}".format(data_initial_string), flush=True)
-        tcp_helper.send_string(args, data_sock, data_initial_string)
+        data_sock.sendall(data_initial_string.encode())
         if args.verbosity:
             print("sent data initial string (tcp)", flush=True)
 

@@ -136,7 +136,7 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
                     str(r_record["interval_dropped_percent"]) + " " +
                     str(r_record["is_sample_valid"]) + " d ")
 
-        control_conn.send(new_str.encode())
+        control_conn.send_string(new_str)
 
         if args.verbosity > 1:
             print("control receiver process: {}".format(new_str), flush=True)

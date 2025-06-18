@@ -8,25 +8,6 @@ from . import const
 from .exceptions import PeerDisconnectedException
 
 
-def send(args, tcp_sock, payload_bytes):
-    num_payload_bytes = len(payload_bytes)
-
-    num_bytes_sent = tcp_sock.send(payload_bytes)
-
-    if num_bytes_sent != num_payload_bytes:
-        raise Exception("ERROR: tcp_helper.send(): send failed: wrong number of bytes sent: expected {}, actual {}".format(
-            num_payload_bytes,
-            num_bytes_sent
-        ))
-
-    if args and args.verbosity > 2:
-        print("tcp send: {}".format(payload_bytes.decode()), flush=True)
-
-
-def send_string(args, tcp_sock, str0):
-    send(args, tcp_sock, str0.encode())
-
-
 def recv(args, tcp_sock, max_bytes_to_read):
 
     # blocking
@@ -41,6 +22,7 @@ def recv(args, tcp_sock, max_bytes_to_read):
     return recv_bytes
 
 
+# data sock only
 def recv_exact_num_bytes(args, tcp_sock, total_num_bytes_to_read):
     payload_bytes = bytearray()
     num_bytes_read = 0

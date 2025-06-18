@@ -31,11 +31,11 @@ class TcpControlConnectionClass:
     def set_args(self, args):
         self.args = args
 
-    def send(self, payload_bytes):
-        tcp_helper.send(self.args, self.control_sock, payload_bytes)
+    def send_bytes(self, payload_bytes):
+        self.control_sock.sendall(payload_bytes)
 
     def send_string(self, str0):
-        tcp_helper.send(self.args, self.control_sock, str0.encode())
+        self.send_bytes(str0.encode())
 
     def recv_into_buffer_until_minimum_size(self, minimum_buffer_size):
 

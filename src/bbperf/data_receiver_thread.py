@@ -123,13 +123,7 @@ def run(readyevent, args, control_conn, data_sock, peer_addr):
             ba.extend(str(total_recv_calls).encode())       # num of pkts received, valid for udp only
             ba.extend(b' c ')
 
-            try:
-                control_conn.send(ba)
-
-            except Exception:
-                print("ERROR: send on control socket failed", flush=True)
-                # exit process
-                break
+            control_conn.send_bytes(ba)
 
             interval_bytes_received = 0
             interval_pkts_received = 0
