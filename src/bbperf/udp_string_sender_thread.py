@@ -23,7 +23,7 @@ def run(readyevent, doneevent, args, data_sock, peer_addr, string_to_send):
         if doneevent.is_set():
             break
 
-        udp_helper.sendto(args, data_sock, peer_addr, string_to_send.encode())
+        udp_helper.sendto(data_sock, peer_addr, string_to_send.encode())
         send_count += 1
 
         time.sleep(ping_interval_sec)

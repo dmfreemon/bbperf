@@ -39,7 +39,7 @@ class JsonOutputClass:
 
         num_samples = len(loaded_rtt_ms_list)
         if num_samples < 10:
-            print("ERROR: not enough valid samples for summary statistics: {} samples.  Increase the duration of the run using the '-t' option.".format(num_samples),
+            print("ERROR: not enough valid samples for summary statistics: {} samples".format(num_samples),
                   file=sys.stderr,
                   flush=True)
             return

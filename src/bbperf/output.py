@@ -158,23 +158,23 @@ def print_output(s1):
 
         # write to stdout at the rate of one line per second
         # each stdout line will be a 0.1s snapshot
-        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
+        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity > 2:
             if print_header2:
-                print("  sent_time   recv_time  sender_pps sender_Mbps receiver_pps receiver_Mbps unloaded_rtt_ms  rtt_ms  BDP_bytes buffered_bytes  bloat   pkts_dropped  drop%", flush=True)
+                print("  sent_time   recv_time  sender_Mbps receiver_Mbps sender_pps receiver_pps unloaded_rtt_ms rtt_ms BDP_bytes buffered_bytes bloat pkts_dropped  drop%", flush=True)
                 print_header2 = False
 
             if r_record["interval_dropped_percent"] < 0:
-                dropped_percent_str = "  n/a"
+                dropped_percent_str = "   n/a"
             else:
                 dropped_percent_str = "{:6.3f}%".format(r_record["interval_dropped_percent"])
 
-            print("{:11.6f} {:11.6f} {:8d}   {:11.3f}   {:8d}    {:11.3f}    {:8.3f}    {:9.3f}  {:9d}    {:9d}    {:6.1f}x    {:6d}     {}".format(
+            print("{:11.6f} {:11.6f} {:11.3f}   {:11.3f}   {:8d}     {:8d}    {:8.3f}   {:9.3f} {:9d}    {:9d} {:6.1f}x   {:6d}    {}".format(
                 relative_pkt_sent_time_sec,
                 relative_pkt_received_time_sec,
-                r_record["sender_pps"],
                 r_record["sender_interval_rate_mbps"],
-                r_record["receiver_pps"],
                 r_record["receiver_interval_rate_mbps"],
+                r_record["sender_pps"],
+                r_record["receiver_pps"],
                 unloaded_latency_rtt_ms,
                 r_record["rtt_ms"],
                 bdp_bytes,
@@ -193,7 +193,7 @@ def print_output(s1):
         if (unloaded_latency_rtt_ms is None) or (r_record["rtt_ms"] < unloaded_latency_rtt_ms):
             unloaded_latency_rtt_ms = r_record["rtt_ms"]
 
-        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity:
+        if ((curr_time > (last_line_to_stdout_time + const.STDOUT_INTERVAL_SEC)) and not args.quiet) or args.verbosity > 2:
             if print_header1:
                 print("calibrating", flush=True)
                 print("  sent_time   recv_time     rtt_ms", flush=True)

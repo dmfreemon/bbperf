@@ -3,27 +3,10 @@
 
 import socket
 
-from . import const
-
 from .exceptions import PeerDisconnectedException
 
 
-def recv(args, tcp_sock, max_bytes_to_read):
-
-    # blocking
-    recv_bytes = tcp_sock.recv(max_bytes_to_read)
-
-    if len(recv_bytes) == 0:
-        raise PeerDisconnectedException()
-
-    if args and args.verbosity > 2:
-        print("tcp recv: {}".format(recv_bytes.decode()), flush=True)
-
-    return recv_bytes
-
-
-# data sock only
-def recv_exact_num_bytes(args, tcp_sock, total_num_bytes_to_read):
+def recv_exact_num_bytes(data_sock, total_num_bytes_to_read):
     payload_bytes = bytearray()
     num_bytes_read = 0
 
@@ -31,8 +14,10 @@ def recv_exact_num_bytes(args, tcp_sock, total_num_bytes_to_read):
 
         num_bytes_remaining = total_num_bytes_to_read - num_bytes_read
 
-        # blocking
-        recv_bytes = recv(args, tcp_sock, num_bytes_remaining)
+        recv_bytes = data_sock.recv(num_bytes_remaining)
+
+        if len(recv_bytes) == 0:
+            raise PeerDisconnectedException()
 
         num_bytes_received = len(recv_bytes)
 
@@ -52,6 +37,7 @@ def get_congestion_control(data_sock):
     cc_algo_str = cc_algo_bytes.split(b'\x00')[0].decode()
     return cc_algo_str
 
+
 def set_congestion_control(data_sock):
     if get_congestion_control(data_sock) == "cubic":
         # already set, nothing to do here
@@ -62,6 +48,7 @@ def set_congestion_control(data_sock):
     cc_algo_str = get_congestion_control(data_sock)
     if cc_algo_str != "cubic":
         raise Exception("ERROR: unexpected congestion control in effect: {}".format(cc_algo_str))
+
 
 def set_tcp_notsent_lowat(data_sock):
     data_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NOTSENT_LOWAT, (1024 * 1024))

@@ -27,7 +27,6 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
     while True:
 
         try:
-            # blocking
             bytes_read = control_conn.recv_a_c_block()
 
         except ConnectionResetError:
@@ -68,7 +67,7 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
 
         results_queue.put(new_str)
 
-        if args.verbosity > 1:
+        if args.verbosity > 3:
             print("control receiver process: {}".format(new_str), flush=True)
 
         if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
@@ -97,7 +96,6 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
     while True:
 
         try:
-            # blocking
             bytes_read = control_conn.recv_a_c_block()
 
         except ConnectionResetError:
@@ -138,7 +136,7 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
 
         control_conn.send_string(new_str)
 
-        if args.verbosity > 1:
+        if args.verbosity > 3:
             print("control receiver process: {}".format(new_str), flush=True)
 
         if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
@@ -163,7 +161,6 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
 
     while True:
         try:
-            # blocking
             bytes_read = control_conn.recv_a_d_block()
 
         except ConnectionResetError:
@@ -185,7 +182,7 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
         # passthru as is
         results_queue.put(received_str)
 
-        if args.verbosity > 1:
+        if args.verbosity > 3:
             print("control receiver process: {}".format(received_str), flush=True)
 
         if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):

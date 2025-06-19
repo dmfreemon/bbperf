@@ -105,10 +105,12 @@ Output from `bbperf` includes the following information:
 Output to standard out is controlled via the `--verbosity` and `--quiet` options as follows:
 ```
     -qq           nothing to stdout except errors
-    -q            run summary in json format
+    -q            run summary in json format only (no interval output)
 (neither option)  progress update once per second plus run summary in json format (default)
-    -v            progress update once per 0.1 seconds, additional output, and run summary in json format
-    -vv           debugging info useful for developers only
+    -v            plus one-time messages showing progress setting up and running the test
+    -vv           plus rate change events (udp only)
+    -vvv          plus interval output at the rate of one per 0.1 seconds
+    -vvvv         plus all control connection messages
 ```
 
 ### Installation

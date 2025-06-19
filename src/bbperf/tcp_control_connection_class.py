@@ -7,7 +7,6 @@ import socket
 
 from . import const
 from . import util
-from . import tcp_helper
 
 from .exceptions import PeerDisconnectedException
 
@@ -31,27 +30,35 @@ class TcpControlConnectionClass:
     def set_args(self, args):
         self.args = args
 
+
     def send_bytes(self, payload_bytes):
         self.control_sock.sendall(payload_bytes)
+
+        if self.args.verbosity > 3:
+            print("control conn sending: {}".format(payload_bytes.decode()), flush=True)
+
 
     def send_string(self, str0):
         self.send_bytes(str0.encode())
 
+
+    def recv(self, max_bytes_to_read):
+
+        recv_bytes = self.control_sock.recv(max_bytes_to_read)
+
+        if len(recv_bytes) == 0:
+            raise PeerDisconnectedException()
+
+        self.read_buffer.extend(recv_bytes)
+
+
     def recv_into_buffer_until_minimum_size(self, minimum_buffer_size):
 
-        while True:
-            if len(self.read_buffer) >= minimum_buffer_size:
-                break
+        while len(self.read_buffer) < minimum_buffer_size:
 
             num_bytes_remaining = minimum_buffer_size - len(self.read_buffer)
 
-            # blocking
-            recv_bytes = tcp_helper.recv(self.args, self.control_sock, num_bytes_remaining)
-
-            if len(recv_bytes) == 0:
-                raise PeerDisconnectedException()
-
-            self.read_buffer.extend(recv_bytes)
+            self.recv(num_bytes_remaining)
 
 
     def recv_exact_num_bytes(self, exact_num_bytes_to_read):
@@ -73,10 +80,7 @@ class TcpControlConnectionClass:
                 # found
                 break
 
-            # blocking
-            recv_bytes = tcp_helper.recv(self.args, self.control_sock, const.BUFSZ)
-
-            self.read_buffer.extend(recv_bytes)
+            self.recv(const.BUFSZ)
 
         return substr_idx
 
@@ -100,7 +104,6 @@ class TcpControlConnectionClass:
     def receive_args_from_client(self):
         # starts with "{" and ends with "}"
 
-        # blocking
         substr_idx = self.recv_into_buffer_until_substr_found(b'}')
 
         received_bytes = self.read_buffer[ 0 : substr_idx + 1 ]
@@ -119,7 +122,6 @@ class TcpControlConnectionClass:
     def wait_for_start_message(self):
         len_str = len(const.START_MSG)
 
-        # blocking
         self.recv_into_buffer_until_minimum_size(len_str)
 
         received_bytes = self.read_buffer[ 0 : len_str ]
@@ -135,7 +137,6 @@ class TcpControlConnectionClass:
         start_bytes = b' a '
         end_bytes = b' c '
 
-        # blocking
         substr_idx = self.recv_into_buffer_until_substr_found(end_bytes)
 
         received_bytes = self.read_buffer[ 0 : substr_idx + 3 ]
@@ -151,7 +152,6 @@ class TcpControlConnectionClass:
         start_bytes = b' a '
         end_bytes = b' d '
 
-        # blocking
         substr_idx = self.recv_into_buffer_until_substr_found(end_bytes)
 
         received_bytes = self.read_buffer[ 0 : substr_idx + 3 ]

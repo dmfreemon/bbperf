@@ -53,7 +53,6 @@ def server_mainline(args):
 
         print("waiting to receive control initial string from client", flush=True)
 
-        # blocking
         run_id = control_conn.recv_initial_string()
 
         print("received control initial string: run_id: {}".format(run_id), flush=True)
@@ -66,7 +65,6 @@ def server_mainline(args):
 
         print("waiting for args from client", flush=True)
 
-        # blocking
         client_args = control_conn.receive_args_from_client()
 
         print("received args from client: {}".format(vars(client_args)), flush=True)
@@ -104,7 +102,6 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
 
-            # blocking
             payload_bytes, client_data_addr = data_sock.recvfrom(len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
 
@@ -134,7 +131,6 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("creating data connection (tcp), waiting for accept", flush=True)
 
-            # blocking
             data_sock, _ = listen_sock.accept()
             data_sock.settimeout(const.SOCKET_TIMEOUT_SEC)
             tcp_helper.set_congestion_control(data_sock)
@@ -147,8 +143,7 @@ def server_mainline(args):
             if client_args.verbosity:
                 print("waiting to receive data initial string", flush=True)
 
-            # blocking
-            payload_bytes = tcp_helper.recv_exact_num_bytes(client_args, data_sock, len_data_connection_initial_string)
+            payload_bytes = tcp_helper.recv_exact_num_bytes(data_sock, len_data_connection_initial_string)
             payload_str = payload_bytes.decode()
 
             if client_args.verbosity:

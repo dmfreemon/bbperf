@@ -144,7 +144,6 @@ def client_mainline(args):
             print("waiting for data initial ack", flush=True)
 
         # wait for data init ack
-        # blocking
         udp_helper.wait_for_string(data_sock, server_addr, const.UDP_DATA_INITIAL_ACK)
 
         if args.verbosity:
