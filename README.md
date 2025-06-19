@@ -56,33 +56,37 @@ The first few seconds performs a calibration, during which it captures the unloa
 
 The direction of data flow is from the client to the server.  That is reversed when the "-R" option is specified.
 
-The duration of this tool is non-deterministic.  The time option (`-t`/`--time`) specifies how long to run _after_ valid data samples are observed.  `bbperf` will automatically detect when it has enough data samples for the calibration, which establishes the unloaded latency value.
+The duration of this tool is non-deterministic.  The time option (`-t`/`--time`) specifies how long to run _after_ valid data samples are observed.  `bbperf` will automatically detect when it has enough data samples for the calibration, which establishes the unloaded latency value.  It will also not collect data samples during inital ramp up of the flow.
 
 Should `bbperf` not detect any valid data samples for 60 seconds after calibration is complete, the tool will exit without results.  An example of when that might happen is if the sending host is cpu constrained such that no bottleneck is created on the network.
 
 ```
 $ bbperf.py --help
-usage: bbperf.py [-h] [-s] [-c SERVER_ADDR] [-p SERVER_PORT] [-u] [-R] [-t SECONDS] [-v] [-q] [-J JSON_FILE] [-g] [-k] [-B BIND_ADDR]
+usage: bbperf [-h] [-s] [-c SERVER_ADDR] [-p SERVER_PORT] [-u] [-R] [--max-ramp-time SECONDS] [-t SECONDS] [-v] [-q] [-J JSON_FILE] [-g] [-k] [-B BIND_ADDR]
 
 bbperf: end to end performance and bufferbloat measurement tool
 
 options:
   -h, --help            show this help message and exit
   -s, --server          run in server mode
-  -c, --client SERVER_ADDR
+  -c SERVER_ADDR, --client SERVER_ADDR
                         run in client mode (specify either DNS name or IP address)
-  -p, --port SERVER_PORT
+  -p SERVER_PORT, --port SERVER_PORT
                         server port (default: 5301)
   -u, --udp             run in UDP mode (default: TCP mode)
   -R, --reverse         data flow in download direction (server to client)
-  -t, --time SECONDS    duration in seconds to collect valid data samples (dafault: 20)
+  --max-ramp-time SECONDS
+                        max duration in seconds before collecting data samples (tcp default: 5, udp default: 20)
+  -t SECONDS, --time SECONDS
+                        duration in seconds to collect valid data samples (default: 20)
   -v, --verbosity       increase output verbosity (can be repeated)
   -q, --quiet           decrease output verbosity (can be repeated)
-  -J, --json-file JSON_FILE
+  -J JSON_FILE, --json-file JSON_FILE
                         JSON output file
   -g, --graph           generate graph (requires gnuplot)
   -k, --keep            keep data file
-  -B, --bind BIND_ADDR  bind server sockets to address
+  -B BIND_ADDR, --bind BIND_ADDR
+                        bind server sockets to address
 ```
 
 Output from `bbperf` includes the following information:

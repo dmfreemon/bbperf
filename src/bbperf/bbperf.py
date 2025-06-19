@@ -41,11 +41,19 @@ def mainline():
         default=False,
         help="data flow in download direction (server to client)")
 
+    parser.add_argument("--max-ramp-time",
+        metavar="SECONDS",
+        type=int,
+        default=None,
+        help="max duration in seconds before collecting data samples (tcp default: {}, udp default: {})".format(
+            const.DATA_SAMPLE_IGNORE_TIME_TCP_MAX_SEC,
+            const.DATA_SAMPLE_IGNORE_TIME_UDP_MAX_SEC))
+
     parser.add_argument("-t", "--time",
         metavar="SECONDS",
         type=int,
         default=const.DEFAULT_VALID_DATA_COLLECTION_TIME_SEC,
-        help="duration in seconds to collect valid data samples (dafault: {})".format(const.DEFAULT_VALID_DATA_COLLECTION_TIME_SEC))
+        help="duration in seconds to collect valid data samples (default: {})".format(const.DEFAULT_VALID_DATA_COLLECTION_TIME_SEC))
 
     parser.add_argument("-v", "--verbosity",
         action="count",

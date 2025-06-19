@@ -3,6 +3,8 @@
 # Copyright (c) 2024 Cloudflare, Inc.
 # Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
+set -x
+
 SERVER_ADDR=127.0.0.1
 
 EXTRAARGS="-v -t 10"
