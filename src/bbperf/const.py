@@ -1,6 +1,8 @@
 # Copyright (c) 2024 Cloudflare, Inc.
 # Licensed under the Apache 2.0 license found in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0
 
+BBPERF_VERSION = "0.0.21"
+
 SERVER_PORT = 5301
 
 DEFAULT_VALID_DATA_COLLECTION_TIME_SEC = 20

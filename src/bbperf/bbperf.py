@@ -11,6 +11,7 @@ from . import util
 from . import const
 
 def mainline():
+    print("bbperf version {}".format(const.BBPERF_VERSION), flush=True)
 
     parser = argparse.ArgumentParser(description="bbperf: end to end performance and bufferbloat measurement tool")
 

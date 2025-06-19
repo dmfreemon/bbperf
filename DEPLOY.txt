@@ -11,8 +11,12 @@ Create tar.gz and whl files in dist directory:
 
     cd /path/to/bbperf/git/repo/dir    <-- the directory with the pyproject.toml file
 
+    vim src/bbperf/const.py            <-- increment the version number
+    git add src/bbperf/const.py
+
     vim pyproject.toml                 <-- increment the version number
     git add pyproject.toml
+
     git commit -m 'version 0.0.2'
 
     git tag -a v0.0.2 -m 'version 0.0.2'
