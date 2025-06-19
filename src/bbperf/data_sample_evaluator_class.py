@@ -19,6 +19,9 @@ class DataSampleEvaluatorClass:
             else:
                 self.max_ramp_time = const.DATA_SAMPLE_IGNORE_TIME_TCP_MAX_SEC
 
+        if self.args.verbosity:
+            print("max_ramp_time is {}".format(self.max_ramp_time), flush=True)
+
 
     # once a sample is valid then all subsequent samples are valid
     def is_sample_valid(self, run_mode_running_start_time, dropped_this_interval_percent, curr_time):

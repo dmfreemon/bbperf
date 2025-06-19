@@ -18,9 +18,9 @@ class RunModeManagerClass:
         self.run_mode_running_start_time = None
         self.min_rtt_ms = None
         self.last_10_rtt_list = []
-        self.num_good_samples = 0
         self.total_dropped_as_of_last_interval = 0
         self.data_sample_evaluator = DataSampleEvaluatorClass(self.args)
+        self.first_valid_sample_time = None
 
 
     # updates shared_run_mode and r_record["is_sample_valid"]
@@ -59,7 +59,7 @@ class RunModeManagerClass:
         # run mode is RUNNING or STOP
 
         # have we reached max time for data run without getting any valid data samples?
-        if ((self.num_good_samples == 0) and (curr_time > (self.run_mode_running_start_time + const.MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA))):
+        if ((self.first_valid_sample_time is None) and (curr_time > (self.run_mode_running_start_time + const.MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA))):
             self.shared_run_mode.value = const.RUN_MODE_STOP
 
         # check to see if we should stop RUNNING
@@ -78,18 +78,18 @@ class RunModeManagerClass:
         r_record["interval_dropped"] = dropped_this_interval
         r_record["interval_dropped_percent"] = dropped_this_interval_percent
 
-        # how many good samples do we have?
         if self.data_sample_evaluator.is_sample_valid(
                 self.run_mode_running_start_time,
                 dropped_this_interval_percent,
                 curr_time):
 
             r_record["is_sample_valid"] = 1
-            self.num_good_samples += 1
+            if self.first_valid_sample_time is None:
+                self.first_valid_sample_time = curr_time
+
         else:
             r_record["is_sample_valid"] = 0
 
-        # num samples is 10x because we collect every 0.1 seconds
-        if self.num_good_samples > (self.args.time * 10):
+        if self.first_valid_sample_time and (curr_time > (self.first_valid_sample_time + self.args.time)):
             self.shared_run_mode.value = const.RUN_MODE_STOP
 
