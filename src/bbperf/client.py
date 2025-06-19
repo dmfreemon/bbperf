@@ -139,7 +139,7 @@ def client_mainline(args):
     control_conn.wait_for_setup_complete_message()
 
     shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
-    shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
+    shared_udp_sending_rate_pps = multiprocessing.Value('i', const.UDP_DEFAULT_INITIAL_RATE)
     control_receiver_results_queue = multiprocessing.Queue()
 
     if args.reverse:

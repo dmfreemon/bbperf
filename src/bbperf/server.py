@@ -136,7 +136,7 @@ def server_mainline(args):
 
 
         shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
-        shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
+        shared_udp_sending_rate_pps = multiprocessing.Value('i', const.UDP_DEFAULT_INITIAL_RATE)
 
         if client_args.reverse:
             # direction down

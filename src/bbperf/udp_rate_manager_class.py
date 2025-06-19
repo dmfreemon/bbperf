@@ -32,7 +32,7 @@ class UdpRateManagerClass:
 
         receiver_pps_p90 = numpy.percentile(self.receiver_pps_list, 90)
 
-        new_rate = receiver_pps_p90 * 1.2
+        new_rate = int(receiver_pps_p90 * 1.2)
 
         if new_rate < const.UDP_MIN_RATE:
             new_rate = const.UDP_MIN_RATE
@@ -40,15 +40,18 @@ class UdpRateManagerClass:
         if new_rate > const.UDP_MAX_RATE:
             new_rate = const.UDP_MAX_RATE
 
-        if abs(new_rate - self.last_new_rate) < 2:
+        delta_rate = new_rate - self.last_new_rate
+
+        if abs(delta_rate) < 2:
             # do not bother with tiny changes
             return
 
         if self.args.verbosity > 1:
-            print("UdpRateManager: update: receiver pps {} old rate {} new rate {}".format(
+            print("UdpRateManager: update: receiver pps {:6d} old rate {:6d} new rate {:6d} delta {:7d}".format(
                 r_record["receiver_pps"],
                 self.shared_udp_sending_rate_pps.value,
-                new_rate),
+                new_rate,
+                delta_rate),
                 flush=True
             )
 
