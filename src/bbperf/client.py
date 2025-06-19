@@ -56,58 +56,25 @@ def client_mainline(args):
     control_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     control_sock.connect(server_addr)
 
-    control_conn = TcpControlConnectionClass(control_sock)
-    control_conn.set_args(args)
-
     client_control_addr = control_sock.getsockname()
 
     if args.verbosity:
         print("created control connection, client {}, server {}".format(
               client_control_addr, server_addr), flush=True)
 
+    control_conn = TcpControlConnectionClass(control_sock)
+    control_conn.set_args(args)
+
     # generate a random UUID (36 character string)
     run_id = str(uuid.uuid4())
-    control_initial_string = "control " + run_id
 
-    if args.verbosity:
-        print("sending control initial string: {}".format(control_initial_string), flush=True)
+    control_conn.send_control_initial_string(run_id)
 
-    control_conn.send_string(control_initial_string)
+    control_conn.wait_for_control_initial_ack()
 
-    if args.verbosity:
-        print("sent control initial string", flush=True)
+    control_conn.send_args_to_server(args)
 
-    if args.verbosity:
-        print("waiting for control initial ack", flush=True)
-
-    received_bytes = control_conn.recv_exact_num_bytes(len(const.TCP_CONTROL_INITIAL_ACK))
-    received_str = received_bytes.decode()
-    if received_str != const.TCP_CONTROL_INITIAL_ACK:
-        raise Exception("ERROR: received invalid control initial ack: {}".format(received_str))
-
-    if args.verbosity:
-        print("received control initial ack", flush=True)
-
-    if args.verbosity:
-        print("sending args to server: {}".format(vars(args)), flush=True)
-
-    args_json = json.dumps(vars(args))
-
-    control_conn.send_string(args_json)
-
-    if args.verbosity:
-        print("sent args to server", flush=True)
-
-    if args.verbosity:
-        print("waiting for control args ack", flush=True)
-
-    received_bytes = control_conn.recv_exact_num_bytes(len(const.TCP_CONTROL_ARGS_ACK))
-    received_str = received_bytes.decode()
-    if received_str != const.TCP_CONTROL_ARGS_ACK:
-        raise Exception("ERROR: received invalid control args ack: {}".format(received_str))
-
-    if args.verbosity:
-        print("received control args ack", flush=True)
+    control_conn.wait_for_control_args_ack()
 
     # create data connection
 
@@ -169,18 +136,7 @@ def client_mainline(args):
         if args.verbosity:
             print("sent data initial string (tcp)", flush=True)
 
-    if args.verbosity:
-        print("waiting for connection setup complete message from server", flush=True)
-
-    # wait for connection setup complete message
-    len_of_setup_complete_message = len(const.SETUP_COMPLETE_MSG)
-    payload_bytes = control_conn.recv_exact_num_bytes(len_of_setup_complete_message)
-    payload_str = payload_bytes.decode()
-    if payload_str != const.SETUP_COMPLETE_MSG:
-        raise Exception("ERROR: client_mainline: setup complete message was not received")
-
-    if args.verbosity:
-        print("connection setup complete message received from server", flush=True)
+    control_conn.wait_for_setup_complete_message()
 
     shared_run_mode = multiprocessing.Value('i', const.RUN_MODE_CALIBRATING)
     shared_udp_sending_rate_pps = multiprocessing.Value('d', const.UDP_DEFAULT_INITIAL_RATE)
@@ -215,13 +171,7 @@ def client_mainline(args):
 
         # test starts here
 
-        if args.verbosity:
-            print("sending start message to server", flush=True)
-
-        control_conn.send_string(const.START_MSG)
-
-        if args.verbosity:
-            print("sent start message to server", flush=True)
+        control_conn.send_start_message()
 
         thread_list = []
         thread_list.append(data_receiver_process)
@@ -300,7 +250,7 @@ def client_mainline(args):
     output.term()
 
     util.done_with_socket(data_sock)
-    util.done_with_socket(control_sock)
+    control_conn.close()
 
     graphdatafilename = output.get_graph_data_file_name()
     rawdatafilename = output.get_raw_data_file_name()

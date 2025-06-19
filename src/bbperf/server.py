@@ -41,43 +41,25 @@ def server_mainline(args):
         # blocking
         control_sock, _ = listen_sock.accept()
 
-        control_conn = TcpControlConnectionClass(control_sock)
-        control_conn.set_args(args)
-
-        curr_client_start_time = time.time()
-
         client_control_addr = control_sock.getpeername()
 
         print("client connected (control socket): client addr {}, server addr {}".format(
             client_control_addr, server_addr), flush=True)
 
-        print("waiting to receive control initial string from client", flush=True)
+        control_conn = TcpControlConnectionClass(control_sock)
+        control_conn.set_args(args)
 
-        run_id = control_conn.recv_initial_string()
+        curr_client_start_time = time.time()
 
-        print("received control initial string: run_id: {}".format(run_id), flush=True)
+        run_id = control_conn.wait_for_control_initial_string()
 
-        print("sending control initial ack", flush=True)
+        control_conn.send_control_initial_ack()
 
-        control_conn.send_string(const.TCP_CONTROL_INITIAL_ACK)
+        client_args = control_conn.wait_for_args_from_client()
 
-        print("sent control initial ack", flush=True)
-
-        print("waiting for args from client", flush=True)
-
-        client_args = control_conn.receive_args_from_client()
-
-        print("received args from client: {}".format(vars(client_args)), flush=True)
+        control_conn.send_control_args_ack()
 
         control_conn.set_args(client_args)
-
-        # send args ACK
-
-        print("sending control args ack", flush=True)
-
-        control_conn.send_string(const.TCP_CONTROL_ARGS_ACK)
-
-        print("sent control args ack", flush=True)
 
         # accept data connection
 
@@ -159,13 +141,7 @@ def server_mainline(args):
         if client_args.reverse:
             # direction down
 
-            if client_args.verbosity:
-                print("sending setup complete message to client", flush=True)
-
-            control_conn.send_string(const.SETUP_COMPLETE_MSG)
-
-            if client_args.verbosity:
-                print("sent setup complete message to client", flush=True)
+            control_conn.send_setup_complete_message()
 
             readyevent = multiprocessing.Event()
 
@@ -181,14 +157,7 @@ def server_mainline(args):
                 args = (client_args, data_sock, client_data_addr, shared_run_mode, shared_udp_sending_rate_pps),
                 daemon = True)
 
-            if client_args.verbosity:
-                print("waiting for start message from client", flush=True)
-
-            # wait for start message
             control_conn.wait_for_start_message()
-
-            if client_args.verbosity:
-                print("received start message from client", flush=True)
 
             if client_args.udp:
                 # stop sending UDP data init acks
@@ -224,14 +193,7 @@ def server_mainline(args):
             thread_list = []
             thread_list.append(data_receiver_process)
 
-            if client_args.verbosity:
-                print("sending setup complete message to client", flush=True)
-
-            control_conn.send_string(const.SETUP_COMPLETE_MSG)
-
-            if client_args.verbosity:
-                print("sent setup complete message to client", flush=True)
-
+            control_conn.send_setup_complete_message()
 
         print("test running, {} {}, control conn addr {}, data conn addr {}, server addr {}, elapsed startup time {} seconds".format(
               "udp" if client_args.udp else "tcp",
@@ -259,6 +221,6 @@ def server_mainline(args):
             print("test finished, cleaning up", flush=True)
 
         util.done_with_socket(data_sock)
-        util.done_with_socket(control_sock)
+        control_conn.close()
 
         print("client ended", flush=True)
