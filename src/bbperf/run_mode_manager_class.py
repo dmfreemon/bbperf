@@ -82,8 +82,7 @@ class RunModeManagerClass:
         if self.data_sample_evaluator.is_sample_valid(
                 self.run_mode_running_start_time,
                 dropped_this_interval_percent,
-                r_record["sender_interval_rate_mbps"],
-                r_record["receiver_interval_rate_mbps"]):
+                curr_time):
 
             r_record["is_sample_valid"] = 1
             self.num_good_samples += 1

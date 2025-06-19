@@ -113,13 +113,9 @@ def parse_r_record(args, s1):
 
         r_record["receiver_pps"] = int(r_record["r_receiver_interval_pkts_received"] / r_record["r_receiver_interval_duration_sec"])
         r_record["total_dropped"] = r_record["r_sender_total_pkts_sent"] - r_record["r_receiver_total_pkts_received"]
-
         if r_record["total_dropped"] < 0:
-            print("WARNING: total dropped is less than zero: sent {} received {}".format(
-                r_record["r_sender_total_pkts_sent"],
-                r_record["r_receiver_total_pkts_received"]),
-                file=sys.stderr,
-                flush=True)
+            # this can happen if we happen to pick up an "early" a_b block (probably just negative by 1 or 2, not a big deal)
+            r_record["total_dropped"] = 0
 
     else:
         r_record["sender_pps"] = -1
