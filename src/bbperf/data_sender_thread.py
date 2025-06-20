@@ -18,7 +18,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
     # udp autorate
     if args.udp:
         udp_pps = shared_udp_sending_rate_pps.value
-        batch_size, delay_between_batches = util.convert_udp_pps_to_batch_info(udp_pps)
+        udp_batch_size = util.convert_udp_pps_to_batch_size(udp_pps)
 
     # start sending
 
@@ -81,21 +81,34 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         else:
             ba.extend(const.PAYLOAD_1K)
 
+        # send an entire batch
+
+        batch_size = udp_batch_size if args.udp else 1
+
         try:
-            # blocking
-            # we want to block here, as blocked time should "count"
+            batch_counter = 0
 
-            # we use select to take advantage of tcp_notsent_lowat
-            _, _, _ = select.select( [], [data_sock], [])
+            while batch_counter < batch_size:
 
-            if args.udp:
-                num_bytes_sent = data_sock.sendto(ba, peer_addr)
-            else:
-                # tcp
-                num_bytes_sent = data_sock.send(ba)
+                # blocking (timeout 20 seconds)
+                # we want to block here, as blocked time should "count"
 
-            if num_bytes_sent <= 0:
-                raise Exception("ERROR: data_sender_thread.run(): send failed")
+                # we use select to take advantage of tcp_notsent_lowat
+                _, _, _ = select.select( [], [data_sock], [], 20.0)
+
+                if args.udp:
+                    num_bytes_sent = data_sock.sendto(ba, peer_addr)
+                else:
+                    # tcp
+                    num_bytes_sent = data_sock.send(ba)
+
+                if num_bytes_sent <= 0:
+                    raise Exception("ERROR: data_sender_thread.run(): send failed")
+
+                batch_counter += 1
+                total_send_counter += 1
+                accum_send_count += 1
+                accum_bytes_sent += num_bytes_sent
 
         except ConnectionResetError:
             print("Connection reset by peer", flush=True)
@@ -114,15 +127,13 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             continue
 
         except socket.timeout:
-            # we did not send
-            # the timeout value here is 20 seconds, so that is end of days -- kill everything
             error_msg = "FATAL: data_sender_thread: socket timeout"
             print(error_msg, flush=True)
             raise Exception(error_msg)
 
-        total_send_counter += 1
-        accum_send_count += 1
-        accum_bytes_sent += num_bytes_sent
+        # end of batch loop
+
+        curr_time_sec = time.time()
 
         if curr_time_sec > interval_end_time:
             interval_time_sec = curr_time_sec - interval_start_time
@@ -137,14 +148,14 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             # update udp autorate
             if args.udp:
                 udp_pps = shared_udp_sending_rate_pps.value
-                batch_size, delay_between_batches = util.convert_udp_pps_to_batch_info(udp_pps)
+                udp_batch_size = util.convert_udp_pps_to_batch_size(udp_pps)
 
         # send very slowly at first to establish unloaded latency
         if not is_calibrated:
             time.sleep(0.2)
-            # initialize batch variables here in case next loop is batch processing
-            current_batch_start_time = time.time()
-            current_batch_counter = 0
+            if args.udp:
+                # initialize udp batch start time here in case next loop is batch processing
+                current_udp_batch_start_time = time.time()
             continue
 
         # normal end of test
@@ -156,13 +167,10 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
 
         # pause between udp batches if necessary
         if args.udp:
-            current_batch_counter += 1
-            if current_batch_counter >= batch_size:
-                this_delay = delay_between_batches - (curr_time_sec - current_batch_start_time)
-                if this_delay > 0:
-                    time.sleep(delay_between_batches)
-                current_batch_start_time += delay_between_batches
-                current_batch_counter = 0
+            delay_sec = const.UDP_DELAY_BETWEEN_BATCH_STARTS - (curr_time_sec - current_udp_batch_start_time)
+            if delay_sec > 0:
+                time.sleep(delay_sec)
+            current_udp_batch_start_time += const.UDP_DELAY_BETWEEN_BATCH_STARTS
 
 
     # send STOP message

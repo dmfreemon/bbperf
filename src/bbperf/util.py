@@ -21,19 +21,14 @@ def validate_args(args):
         raise Exception("ERROR: cannot specify both verbosity and quiet")
 
 
-def convert_udp_pps_to_batch_info(packets_per_sec):
+def convert_udp_pps_to_batch_size(packets_per_sec):
 
-    batch_size = const.RATE_LIMITED_BATCH_SIZE_PKTS_UDP_PKTS
+    batch_size = int(packets_per_sec / const.UDP_BATCHES_PER_SECOND)
 
-    batches_per_sec = packets_per_sec / batch_size
-
-    if batches_per_sec < 1:
-        batches_per_sec = 1
+    if batch_size < 1:
         batch_size = 1
 
-    delay_between_batches = 1.0 / batches_per_sec
-
-    return batch_size, delay_between_batches
+    return batch_size
 
 
 def done_with_socket(mysock):
