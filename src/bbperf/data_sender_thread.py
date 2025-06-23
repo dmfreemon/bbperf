@@ -40,6 +40,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
     accum_bytes_sent = 0
 
     total_send_counter = 1
+    num_negative_delay = 0
 
     while True:
         curr_time_sec = time.time()
@@ -167,7 +168,11 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         # pause between udp batches if necessary
         if args.udp:
             delay_sec = const.UDP_DELAY_BETWEEN_BATCH_STARTS - (curr_time_sec - current_udp_batch_start_time)
-            if delay_sec > 0:
+            if delay_sec < 0:
+                num_negative_delay += 1
+                if (num_negative_delay % 100) == 0:
+                    print("WARNING: udp sender is cpu constrained, results may be invalid: {}".format(num_negative_delay), flush=True)
+            elif delay_sec > 0:
                 time.sleep(delay_sec)
             current_udp_batch_start_time += const.UDP_DELAY_BETWEEN_BATCH_STARTS
 
