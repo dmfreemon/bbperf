@@ -89,17 +89,16 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             batch_counter = 0
 
             while batch_counter < batch_size:
-
-                # blocking (timeout 20 seconds)
+                # blocking
                 # we want to block here, as blocked time should "count"
-
-                # we use select to take advantage of tcp_notsent_lowat
-                _, _, _ = select.select( [], [data_sock], [], 20.0)
 
                 if args.udp:
                     num_bytes_sent = data_sock.sendto(ba, peer_addr)
                 else:
                     # tcp
+                    # we use select to take advantage of tcp_notsent_lowat
+                    # timeout is 20 seconds
+                    _, _, _ = select.select( [], [data_sock], [], 20.0)
                     num_bytes_sent = data_sock.send(ba)
 
                 if num_bytes_sent <= 0:
