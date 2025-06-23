@@ -60,20 +60,13 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
 
         # we want to be fast here, since this is data write loop, so use ba.extend
 
-        ba = bytearray()
-        ba.extend(b' a ')
-        ba.extend(record_type)
-        ba.extend(b' ')
-        ba.extend(str(curr_time_sec).encode())
-        ba.extend(b' ')
-        ba.extend(str(interval_time_sec).encode())
-        ba.extend(b' ')
-        ba.extend(str(interval_send_count).encode())
-        ba.extend(b' ')
-        ba.extend(str(interval_bytes_sent).encode())
-        ba.extend(b' ')
-        ba.extend(str(total_send_counter).encode())
-        ba.extend(b' b ')
+        ba = bytearray(b' a ' +
+                        record_type + b' ' +
+                        str(curr_time_sec).encode() + b' ' +
+                        str(interval_time_sec).encode() + b' ' +
+                        str(interval_send_count).encode() + b' ' +
+                        str(interval_bytes_sent).encode() + b' ' +
+                        str(total_send_counter).encode() + b' b ')
 
         if args.udp:
             ba.extend(const.PAYLOAD_1K)
@@ -170,7 +163,7 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
             delay_sec = const.UDP_DELAY_BETWEEN_BATCH_STARTS - (curr_time_sec - current_udp_batch_start_time)
             if delay_sec < 0:
                 num_negative_delay += 1
-                if (num_negative_delay % 100) == 0:
+                if (num_negative_delay % const.UDP_NEGATIVE_DELAY_BETWEEN_BATCHES_WARNING_EVERY) == 0:
                     print("WARNING: udp sender is cpu constrained, results may be invalid: {}".format(num_negative_delay), flush=True)
             elif delay_sec > 0:
                 time.sleep(delay_sec)
