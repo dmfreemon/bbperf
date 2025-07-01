@@ -70,8 +70,8 @@ def run_recv_term_queue(readyevent, args, control_conn, results_queue, shared_ru
         if args.verbosity > 3:
             print("control receiver process: {}".format(new_str), flush=True)
 
-        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+        if ((curr_time_sec - start_time_sec) > args.max_run_time_failsafe_sec):
+            raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
     control_conn.close()
 
@@ -139,8 +139,8 @@ def run_recv_term_send(readyevent, args, control_conn, shared_run_mode, shared_u
         if args.verbosity > 3:
             print("control receiver process: {}".format(new_str), flush=True)
 
-        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+        if ((curr_time_sec - start_time_sec) > args.max_run_time_failsafe_sec):
+            raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
     control_conn.close()
 
@@ -185,8 +185,8 @@ def run_recv_queue(readyevent, args, control_conn, results_queue):
         if args.verbosity > 3:
             print("control receiver process: {}".format(received_str), flush=True)
 
-        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+        if ((curr_time_sec - start_time_sec) > args.max_run_time_failsafe_sec):
+            raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
     control_conn.close()
 

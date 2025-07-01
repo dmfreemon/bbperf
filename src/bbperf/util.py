@@ -7,7 +7,7 @@ import socket
 from . import const
 
 
-def validate_args(args):
+def validate_and_finalize_args(args):
     if args.server and args.client:
         raise Exception("ERROR: cannot be both client and server")
 
@@ -19,6 +19,21 @@ def validate_args(args):
 
     if args.verbosity and args.quiet:
         raise Exception("ERROR: cannot specify both verbosity and quiet")
+
+    # set max_run_time_failsafe_sec
+    # never run longer than this under any circumstances
+    max_run_time_failsafe_sec = const.MAX_DURATION_CALIBRATION_TIME_SEC
+
+    if args.udp:
+        max_run_time_failsafe_sec += const.DATA_SAMPLE_IGNORE_TIME_UDP_MAX_SEC
+    else:
+        max_run_time_failsafe_sec += const.DATA_SAMPLE_IGNORE_TIME_TCP_MAX_SEC
+
+    max_run_time_failsafe_sec += const.MAX_DATA_COLLECTION_TIME_WITHOUT_VALID_DATA
+    max_run_time_failsafe_sec += args.time
+
+    d = vars(args)
+    d["max_run_time_failsafe_sec"] = max_run_time_failsafe_sec
 
 
 def convert_udp_pps_to_batch_size(packets_per_sec):

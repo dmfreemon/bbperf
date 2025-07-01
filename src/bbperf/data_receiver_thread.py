@@ -131,8 +131,8 @@ def run(readyevent, args, control_conn, data_sock, peer_addr):
             interval_start_time = curr_time_sec
             interval_end_time = interval_start_time + const.SAMPLE_INTERVAL_SEC
 
-        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+        if ((curr_time_sec - start_time_sec) > args.max_run_time_failsafe_sec):
+            raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
 
     # peer disconnected (or an error)

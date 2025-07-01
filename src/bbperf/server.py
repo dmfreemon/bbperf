@@ -214,8 +214,8 @@ def server_mainline(args):
 
             curr_time_sec = time.time()
 
-            if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-                raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+            if ((curr_time_sec - start_time_sec) > client_args.max_run_time_failsafe_sec):
+                raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
         if client_args.verbosity:
             print("test finished, cleaning up", flush=True)

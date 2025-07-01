@@ -155,8 +155,8 @@ def run(args, data_sock, peer_addr, shared_run_mode, shared_udp_sending_rate_pps
         if shared_run_mode.value == const.RUN_MODE_STOP:
             break
 
-        if ((curr_time_sec - start_time_sec) > const.MAX_RUN_TIME_FAILSAFE_SEC):
-            raise Exception("ERROR: MAX_RUN_TIME_FAILSAFE_SEC exceeded")
+        if ((curr_time_sec - start_time_sec) > args.max_run_time_failsafe_sec):
+            raise Exception("ERROR: max_run_time_failsafe_sec exceeded")
 
         # pause between udp batches if necessary
         if args.udp:

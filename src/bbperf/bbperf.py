@@ -86,7 +86,7 @@ def mainline():
 
     args = parser.parse_args()
 
-    util.validate_args(args)
+    util.validate_and_finalize_args(args)
 
     if args.client:
         client.client_mainline(args)
